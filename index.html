@@ -52,6 +52,14 @@ h2{margin:0;font-size:28px}.small{color:var(--muted);font-size:14px;margin-top:5
   border-radius:18px;padding:22px;transition:.18s
 }
 .grave:hover{transform:translateY(-3px);border-color:#526056}
+.grave.recently-resurrected{
+  border-color:#4f8a5d;
+  box-shadow:0 0 0 1px rgba(104,190,124,.12),0 0 22px rgba(78,160,98,.13);
+}
+.grave.recently-resurrected:hover{
+  border-color:#69a878;
+  box-shadow:0 0 0 1px rgba(118,210,140,.18),0 0 28px rgba(78,160,98,.18);
+}
 .grave button.cover{position:absolute;inset:0;border:0;background:transparent}
 .stone{font-size:44px}.grave h3{margin:7px 0 4px;font-size:21px}
 .meta{color:var(--muted);font-size:13px}
@@ -482,6 +490,13 @@ async function loadGraves(){
 }
 
 function causeText(g){return T[lang].causes[g.causeIndex]||T[lang].causes[10]}
+function isRecentlyResurrected(g){
+ if(!g.resurrected||!g.resurrectedAt)return false;
+ const resurrectedTime=new Date(g.resurrectedAt).getTime();
+ if(!Number.isFinite(resurrectedTime))return false;
+ const twelveHours=12*60*60*1000;
+ return Date.now()-resurrectedTime>=0 && Date.now()-resurrectedTime<twelveHours;
+}
 function money(v){return v?new Intl.NumberFormat(lang==="zh"?"zh-TW":"en-US",{style:"currency",currency:"USD",maximumFractionDigits:0}).format(v):"—"}
 function years(g){return [g.born,g.died].filter(Boolean).join(" — ")||"—"}
 function openBury(){buryForm.reset();buryDialog.showModal()}
@@ -521,7 +536,7 @@ function renderGraves(){
  const list=[...graves].sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)).slice(0,9);
  if(!list.length){graveyard.innerHTML='<div style="grid-column:1/-1;color:var(--muted);padding:30px 0">'+T[lang].empty+'</div>';return}
  list.forEach(g=>{
-   const el=document.createElement("article");el.className="grave";
+   const el=document.createElement("article");el.className="grave"+(isRecentlyResurrected(g)?" recently-resurrected":"");
    const facts=[
      '<div class="card-fact"><span class="card-fact-label">'+(lang==="zh"?"死因":"Cause")+'</span><span class="card-fact-value">'+escapeHtml(causeText(g))+'</span></div>'
    ];
