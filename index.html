@@ -419,7 +419,10 @@ en:{
 };
 
 const SUPABASE_URL="https://csbgmzfvwqwhcbvvhgxw.supabase.co";
-const SUPABASE_KEY="sb_publishable_-Yq8Zt1tR2Kll07EXuKavA_yX4I56H3";let lang=localStorage.getItem("ig-lang")||"zh";
+const SUPABASE_KEY="sb_publishable_-Yq8Zt1tR2Kll07EXuKavA_yX4I56H3";
+const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+let lang=localStorage.getItem("ig-lang")||"zh";
 let graves=[];
 let activeId=null;
 let justCreatedId=null;
@@ -529,7 +532,7 @@ function renderHall(){
  if(!graves.length){hall.innerHTML="";return}
  const expensive=[...graves].sort((a,b)=>(b.moneyLost||0)-(a.moneyLost||0))[0];
  const loved=[...graves].sort((a,b)=>b.respects-a.respects)[0];
- const latest=[...graves].sort((a,b)=>b.createdAt-a.createdAt)[0];
+ const latest=[...graves].sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt))[0];
  const longest=[...graves].sort((a,b)=>{
    const ay=(Number(a.died)||Number(a.born)||0)-(Number(a.born)||0);
    const by=(Number(b.died)||Number(b.born)||0)-(Number(b.born)||0);
@@ -556,7 +559,10 @@ function renderCauses(){
 
 function renderAll(){
  renderI18n();renderGraves();renderStats();renderHall();renderCauses();
- if(activeId && detailDialog.open) fillDetail(graves.find(g=>g.id===activeId));
+ if(activeId && detailDialog.open){
+   const g=graves.find(g=>g.id===activeId);
+   if(g) fillDetail(g);
+ }
 }
 
 function openDetail(id,isNew){
@@ -691,9 +697,11 @@ function buildShareText(g){
    ? g.name+" 正式宣告死亡。🪦 "+last+" — Internet Graveyard · GRAVE #"+g.id
    : g.name+" is officially dead. 🪦 "+last+" — Internet Graveyard · GRAVE #"+g.id;
 }
+
 function toggleShare(){
  sharePanel.style.display=sharePanel.style.display==="block"?"none":"block";
 }
+
 function shareTo(platform){
  const g=graves.find(x=>x.id===activeId);if(!g)return;
  const text=buildShareText(g);
@@ -705,10 +713,14 @@ function shareTo(platform){
  if(platform==="linkedin") target="https://www.linkedin.com/sharing/share-offsite/?url="+encodeURIComponent(url);
  if(target) window.open(target,"_blank","noopener,noreferrer");
 }
+
 async function copyShare(){
  const g=graves.find(x=>x.id===activeId);if(!g)return;
  const text=buildShareText(g)+" "+location.href.split("#")[0]+"#grave-"+g.id;
- try{await navigator.clipboard.writeText(text);showToast(T[lang].copied)}catch(e){}
+ try{
+   await navigator.clipboard.writeText(text);
+   showToast(T[lang].copied);
+ }catch(e){}
 }
 
 async function runDiagnostics(){
@@ -721,13 +733,13 @@ async function runDiagnostics(){
 
  try{
    const r=await fetch(SUPABASE_URL,{method:"GET",mode:"cors",cache:"no-store"});
-   add("Supabase 主機", "OK", "HTTP "+r.status);
+   add("Supabase 主機","OK","HTTP "+r.status);
  }catch(e){
    add("Supabase 主機","FAIL",String(e?.message||e));
  }
 
  try{
-   const {data,error}=await supabaseClient.from("graves").select("id").limit(1);
+   const {error}=await supabaseClient.from("graves").select("id").limit(1);
    if(error) throw error;
    add("graves 讀取","OK","可讀取資料表");
  }catch(e){
@@ -752,17 +764,22 @@ async function runDiagnostics(){
 }
 
 function showToast(msg){
- toast.textContent=msg;toast.classList.add("show");setTimeout(()=>toast.classList.remove("show"),1800);
+ toast.textContent=msg;
+ toast.classList.add("show");
+ setTimeout(()=>toast.classList.remove("show"),1800);
 }
+
 function escapeHtml(v){
  return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
 }
+
 function openGraveFromHash(){
  const m=location.hash.match(/^#grave-(\d+)$/);
  if(!m)return;
  const id=Number(m[1]);
  if(graves.some(g=>g.id===id)) openDetail(id,false);
 }
+
 window.addEventListener("hashchange",openGraveFromHash);
 renderAll();
 loadGraves();
