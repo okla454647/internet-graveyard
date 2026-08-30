@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Internet Graveyard</title>
+<style>
+:root{
+  --bg:#0b100c; --panel:#121813; --panel2:#151d17; --line:#2a342c;
+  --text:#f2efe5; --muted:#aeb6ad; --soft:#d8dfd5; --accent:#ece9df;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;color:var(--text);background:
+  radial-gradient(circle at top,#151d17 0,#0b100c 42%);
+  font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+button,input,textarea,select{font:inherit}
+button{cursor:pointer}
+.wrap{max-width:1140px;margin:auto;padding:0 22px 70px}
+header{
+  height:72px;display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--line)
+}
+.brand{font-weight:800;letter-spacing:.08em}
+.lang button{
+  margin-left:8px;border:1px solid var(--line);background:transparent;color:var(--text);
+  padding:9px 13px;border-radius:10px
+}
+.lang .active{background:var(--accent);color:#111}
+.hero{text-align:center;padding:92px 0 44px}
+.hero h1{font-family:Georgia,serif;font-size:clamp(50px,7vw,82px);margin:0 0 20px}
+.hero p{color:var(--muted);font-size:17px;line-height:1.7;margin:4px auto;max-width:700px}
+.cta{
+  margin-top:28px;border:0;border-radius:14px;padding:15px 24px;
+  background:var(--accent);color:#151712;font-weight:800;font-size:16px
+}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:34px}
+.stat{background:rgba(18,24,19,.76);border:1px solid var(--line);padding:18px;border-radius:16px}
+.stat b{font-size:25px;display:block}.stat span{font-size:13px;color:var(--muted)}
+section{padding:36px 0}
+.section-head{display:flex;align-items:end;justify-content:space-between;margin-bottom:18px}
+h2{margin:0;font-size:27px}.small{color:var(--muted);font-size:14px;margin-top:4px}
+.graveyard{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.grave{
+  position:relative;min-height:230px;border:1px solid var(--line);
+  background:linear-gradient(180deg,var(--panel2),var(--panel));
+  border-radius:18px;padding:22px;transition:.18s
+}
+.grave:hover{transform:translateY(-3px);border-color:#526056}
+.grave button.cover{position:absolute;inset:0;border:0;background:transparent}
+.stone{font-size:44px}.grave h3{margin:7px 0 4px;font-size:21px}
+.meta{color:var(--muted);font-size:13px}
+.epitaph{font-size:15px;line-height:1.6;min-height:46px}
+.tag{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:6px 9px;color:var(--muted);font-size:12px}
+.respect-count{position:absolute;right:18px;bottom:16px;color:var(--soft);font-size:13px}
+.empty{
+  grid-column:1/-1;border:1px dashed var(--line);border-radius:18px;padding:38px;text-align:center;color:var(--muted)
+}
+.hall{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.hall-card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px}
+.hall-card b{display:block;margin-bottom:7px}.hall-card span{color:var(--muted);font-size:14px}
+.causes{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px}
+.cause{display:grid;grid-template-columns:1fr auto;gap:12px;margin:14px 0}
+.bar{height:8px;background:#242c26;border-radius:999px;overflow:hidden;margin-top:7px}
+.bar i{height:100%;display:block;background:#879586}
+dialog{
+  width:min(720px,calc(100% - 24px));border:1px solid var(--line);border-radius:20px;
+  background:#101511;color:var(--text);padding:0
+}
+dialog::backdrop{background:rgba(0,0,0,.72)}
+.modal{padding:24px}.modal-head{display:flex;justify-content:space-between;gap:20px;align-items:flex-start}
+.close{border:0;background:transparent;color:var(--text);font-size:28px}
+label{display:block;margin:14px 0 6px;color:var(--muted);font-size:13px}
+input,textarea,select{
+  width:100%;background:#0a0e0b;color:var(--text);border:1px solid var(--line);
+  border-radius:12px;padding:12px;outline:none
+}
+textarea{min-height:100px;resize:vertical}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.submit{
+  width:100%;margin-top:18px;padding:14px;border:0;border-radius:12px;
+  font-weight:800;background:var(--accent);color:#111
+}
+.detail-grave{text-align:center;padding:10px 0 4px}
+.detail-stone{font-size:72px}.detail-grave h2{font-size:34px;margin-top:6px}
+.detail-meta{color:var(--muted);margin:5px 0 16px}
+.detail-epitaph{font-family:Georgia,serif;font-size:18px;line-height:1.6}
+.detail-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:18px;text-align:left}
+.detail-item{border:1px solid var(--line);border-radius:13px;padding:13px;background:#0c110d}
+.detail-item span{display:block;color:var(--muted);font-size:12px;margin-bottom:5px}
+.story{margin-top:14px;border:1px solid var(--line);border-radius:13px;padding:14px;text-align:left;background:#0c110d}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.action{border:1px solid var(--line);background:#182019;color:var(--text);padding:12px;border-radius:12px;font-weight:700}
+.action.primary{background:var(--accent);color:#111}
+.toast{
+  position:fixed;right:20px;bottom:20px;padding:12px 15px;background:#172019;
+  border:1px solid #38513f;border-radius:12px;opacity:0;transform:translateY(12px);
+  transition:.2s;pointer-events:none
+}
+.toast.show{opacity:1;transform:translateY(0)}
+footer{text-align:center;color:var(--muted);font-size:13px;padding-top:32px}
+@media(max-width:820px){
+  .stats,.hall{grid-template-columns:1fr 1fr}
+  .graveyard{grid-template-columns:1fr}
+  .hero{padding-top:60px}
+}
+@media(max-width:520px){
+  .stats,.hall,.row,.detail-grid,.actions{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="brand">INTERNET GRAVEYARD</div>
+  <div class="lang">
+    <button id="zhBtn" onclick="setLang('zh')">中文</button>
+    <button id="enBtn" onclick="setLang('en')">EN</button>
+  </div>
+</header>
+
+<section class="hero">
+  <h1 data-i18n="title">網路墓園</h1>
+  <p data-i18n="subtitle">埋葬你的失敗專案，讓它永遠留在網路上。</p>
+  <p data-i18n="sub2">每一個死掉的點子，都值得一場正式的葬禮。</p>
+  <button class="cta" onclick="buryDialog.showModal()" data-i18n="bury">🪦 埋葬一個專案 — 免費</button>
+  <div class="stats">
+    <div class="stat"><b id="statBuried">0</b><span data-i18n="statBuried">已埋葬專案</span></div>
+    <div class="stat"><b id="statLost">$0</b><span data-i18n="statLost">據稱損失</span></div>
+    <div class="stat"><b id="statRespect">0</b><span data-i18n="statRespect">致意次數</span></div>
+    <div class="stat"><b>0</b><span data-i18n="statRise">死而復生</span></div>
+  </div>
+</section>
+
+<section>
+  <div class="section-head">
+    <div><h2 data-i18n="latest">最近下葬</h2><div class="small" data-i18n="latestSub">看看今天又有哪些夢想死去了。</div></div>
+  </div>
+  <div class="graveyard" id="graveyard"></div>
+</section>
+
+<section>
+  <div class="section-head">
+    <div><h2 data-i18n="hall">☠️ 失敗名人堂</h2><div class="small" data-i18n="hallSub">有些失敗，值得被記住。</div></div>
+  </div>
+  <div class="hall" id="hall"></div>
+</section>
+
+<section>
+  <div class="section-head"><div><h2 data-i18n="kills">什麼最常殺死網路專案？</h2></div></div>
+  <div class="causes" id="causes"></div>
+</section>
+
+<footer data-i18n="footer">Internet Graveyard · 讓失敗有個好看的結局。</footer>
+</div>
+
+<dialog id="buryDialog">
+<div class="modal">
+  <div class="modal-head">
+    <div><h2 data-i18n="formTitle">埋葬你的專案</h2><div class="small" data-i18n="formSub">不用把失敗說得漂亮。它已經死了。</div></div>
+    <button class="close" onclick="buryDialog.close()">×</button>
+  </div>
+  <form id="buryForm">
+    <label data-i18n="projectName">專案名稱 *</label>
+    <input id="projectName" required maxlength="60" data-ph="projectNamePh">
+
+    <label data-i18n="whatWasIt">它原本是什麼？ *</label>
+    <input id="description" required maxlength="120" data-ph="whatWasItPh">
+
+    <div class="row">
+      <div><label data-i18n="born">出生年份</label><input id="born" type="number" min="1980" max="2100" placeholder="2025"></div>
+      <div><label data-i18n="died">死亡年份</label><input id="died" type="number" min="1980" max="2100" placeholder="2026"></div>
+    </div>
+
+    <label data-i18n="cause">死因 *</label>
+    <select id="cause" required></select>
+
+    <label data-i18n="epitaph">墓誌銘</label>
+    <textarea id="epitaph" maxlength="180" data-ph="epitaphPh"></textarea>
+
+    <label data-i18n="storyLabel">它是怎麼死的？</label>
+    <textarea id="story" maxlength="1200" data-ph="storyPh"></textarea>
+
+    <label data-i18n="url">專案網址</label>
+    <input id="url" type="url" placeholder="https://">
+
+    <div class="row">
+      <div><label data-i18n="moneyLost">💸 損失多少錢？</label><input id="moneyLost" type="number" min="0" step="1" placeholder="3420"></div>
+      <div><label data-i18n="timeWasted">⏱ 浪費多少時間？</label><input id="timeWasted" maxlength="40" data-ph="timePh"></div>
+    </div>
+
+    <button class="submit" type="submit" data-i18n="submit">🪦 埋葬我的專案</button>
+  </form>
+</div>
+</dialog>
+
+<dialog id="detailDialog">
+<div class="modal">
+  <div class="modal-head">
+    <div><div class="small" id="graveNumber"></div></div>
+    <button class="close" onclick="detailDialog.close()">×</button>
+  </div>
+  <div class="detail-grave">
+    <div class="detail-stone">🪦</div>
+    <h2 id="detailName"></h2>
+    <div class="detail-meta" id="detailYears"></div>
+    <div class="detail-epitaph" id="detailEpitaph"></div>
+    <div class="detail-grid">
+      <div class="detail-item"><span data-i18n="detailWhat">它原本是什麼？</span><b id="detailDescription"></b></div>
+      <div class="detail-item"><span data-i18n="detailCause">死因</span><b id="detailCauseValue"></b></div>
+      <div class="detail-item"><span data-i18n="detailMoney">損失</span><b id="detailMoneyValue"></b></div>
+      <div class="detail-item"><span data-i18n="detailTime">浪費時間</span><b id="detailTimeValue"></b></div>
+    </div>
+    <div class="story" id="detailStoryWrap">
+      <div class="small" data-i18n="storyTitle">它是怎麼死的</div>
+      <div id="detailStory" style="margin-top:7px;line-height:1.65"></div>
+    </div>
+    <div class="actions">
+      <button class="action primary" id="respectBtn" onclick="payRespect()">🌹 <span data-i18n="respect">致意</span></button>
+      <button class="action" onclick="shareGrave()">🔗 <span data-i18n="share">分享墓碑</span></button>
+    </div>
+  </div>
+</div>
+</dialog>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const T={
+zh:{
+ title:"網路墓園",subtitle:"埋葬你的失敗專案，讓它永遠留在網路上。",sub2:"每一個死掉的點子，都值得一場正式的葬禮。",
+ bury:"🪦 埋葬一個專案 — 免費",statBuried:"已埋葬專案",statLost:"據稱損失",statRespect:"致意次數",statRise:"死而復生",
+ latest:"最近下葬",latestSub:"看看今天又有哪些夢想死去了。",hall:"☠️ 失敗名人堂",hallSub:"有些失敗，值得被記住。",
+ kills:"什麼最常殺死網路專案？",footer:"Internet Graveyard · 讓失敗有個好看的結局。",
+ formTitle:"埋葬你的專案",formSub:"不用把失敗說得漂亮。它已經死了。",projectName:"專案名稱 *",projectNamePh:"例如：Fluffy AI",
+ whatWasIt:"它原本是什麼？ *",whatWasItPh:"例如：給貓奴用的 AI 工具",born:"出生年份",died:"死亡年份",cause:"死因 *",
+ epitaph:"墓誌銘",epitaphPh:"例如：沒有人想用。",storyLabel:"它是怎麼死的？",storyPh:"選填。寫下這個專案最後發生了什麼。",
+ url:"專案網址",moneyLost:"💸 損失多少錢？",timeWasted:"⏱ 浪費多少時間？",timePh:"例如：8 個月",submit:"🪦 埋葬我的專案",
+ detailWhat:"它原本是什麼？",detailCause:"死因",detailMoney:"損失",detailTime:"浪費時間",storyTitle:"它是怎麼死的",
+ respect:"致意",share:"分享墓碑",empty:"墓園目前還沒有你的墓碑。埋葬第一個專案吧。",
+ mostExpensive:"💸 最昂貴死亡",mostLoved:"🌹 最受愛戴墓碑",fastest:"⚡ 最新下葬",longest:"🕰 最久折磨",
+ copied:"已複製墓碑連結",respected:"你獻上了一朵花 🌹",
+ causes:["👻 沒有使用者","😴 失去動力","📉 行銷太差","💸 錢燒完了","🔥 過勞","⚔️ 團隊問題","🤖 被 AI 淘汰","🏢 去上班了","💀 糟糕的點子","❓ 不知道","✏️ 其他"]
+},
+en:{
+ title:"Internet Graveyard",subtitle:"Bury your failed project. Let it live forever.",sub2:"Every dead idea deserves a proper funeral.",
+ bury:"🪦 BURY A PROJECT — FREE",statBuried:"projects buried",statLost:"reportedly lost",statRespect:"respects paid",statRise:"resurrected",
+ latest:"Recently Buried",latestSub:"See which dreams died today.",hall:"☠️ Hall of Failure",hallSub:"Some failures deserve to be remembered.",
+ kills:"What kills internet projects?",footer:"Internet Graveyard · Give failure a beautiful ending.",
+ formTitle:"Bury Your Project",formSub:"You do not have to make failure sound pretty. It is already dead.",projectName:"Project Name *",projectNamePh:"e.g. Fluffy AI",
+ whatWasIt:"What was it? *",whatWasItPh:"e.g. An AI tool for cat owners",born:"Born",died:"Died",cause:"Cause of Death *",
+ epitaph:"Epitaph",epitaphPh:"e.g. Nobody wanted it.",storyLabel:"How did it die?",storyPh:"Optional. Tell us what happened at the end.",
+ url:"Project URL",moneyLost:"💸 Money Lost",timeWasted:"⏱ Time Wasted",timePh:"e.g. 8 months",submit:"🪦 BURY MY PROJECT",
+ detailWhat:"What was it?",detailCause:"Cause of death",detailMoney:"Money lost",detailTime:"Time wasted",storyTitle:"How it died",
+ respect:"Pay respects",share:"Share grave",empty:"No graves yet. Bury the first failed project.",
+ mostExpensive:"💸 Most Expensive Death",mostLoved:"🌹 Most Loved Grave",fastest:"⚡ Latest Burial",longest:"🕰 Longest Suffering",
+ copied:"Grave link copied",respected:"You paid your respects 🌹",
+ causes:["👻 No users","😴 Lost motivation","📉 Bad marketing","💸 Ran out of money","🔥 Burnout","⚔️ Team drama","🤖 AI killed it","🏢 Got a real job","💀 Terrible idea","❓ Nobody knows","✏️ Other"]
+}
+};
+
+const seed=[
+ {id:1847,name:"Fluffy AI",description:"AI tool for cat owners",born:"2025",died:"2026",causeIndex:0,epitaph:"Nobody wanted it.",story:"",url:"",moneyLost:3420,timeWasted:"8 months",respects:328,createdAt:1},
+ {id:1848,name:"MyGame.io",description:"An indie game side project",born:"2023",died:"2026",causeIndex:1,epitaph:"Halfway through, I got tired.",story:"",url:"",moneyLost:620,timeWasted:"3 years",respects:94,createdAt:2},
+ {id:1849,name:"Dog Tinder",description:"Dating, but for dogs",born:"2026",died:"2026",causeIndex:8,epitaph:"The idea was worse than the name.",story:"",url:"",moneyLost:80,timeWasted:"6 hours",respects:1204,createdAt:3}
+];
+
+let lang=localStorage.getItem("ig-lang")||"zh";
+let graves=JSON.parse(localStorage.getItem("ig-graves")||"null")||seed;
+let activeId=null;
+
+function save(){localStorage.setItem("ig-graves",JSON.stringify(graves))}
+function causeText(g){return T[lang].causes[g.causeIndex]||T[lang].causes[10]}
+function money(v){return v?new Intl.NumberFormat(lang==="zh"?"zh-TW":"en-US",{style:"currency",currency:"USD",maximumFractionDigits:0}).format(v):"—"}
+function years(g){return [g.born,g.died].filter(Boolean).join(" — ")||"—"}
+
+function setLang(l){lang=l;localStorage.setItem("ig-lang",l);renderAll()}
+
+function renderI18n(){
+ document.documentElement.lang=lang==="zh"?"zh-Hant":"en";
+ document.querySelectorAll("[data-i18n]").forEach(el=>{
+   const key=el.dataset.i18n;
+   if(T[lang][key]) el.textContent=T[lang][key];
+ });
+ document.querySelectorAll("[data-ph]").forEach(el=>{
+   const key=el.dataset.ph;
+   if(T[lang][key]) el.placeholder=T[lang][key];
+ });
+ zhBtn.classList.toggle("active",lang==="zh");
+ enBtn.classList.toggle("active",lang==="en");
+ const current=Number(cause.value||0);
+ cause.innerHTML="";
+ T[lang].causes.forEach((x,i)=>{
+   const o=document.createElement("option");o.value=i;o.textContent=x;cause.appendChild(o);
+ });
+ cause.value=current;
+}
+
+function renderGraves(){
+ graveyard.innerHTML="";
+ const list=[...graves].sort((a,b)=>b.createdAt-a.createdAt).slice(0,9);
+ if(!list.length){graveyard.innerHTML='<div class="empty">'+T[lang].empty+'</div>';return}
+ list.forEach(g=>{
+   const el=document.createElement("article");
+   el.className="grave";
+   el.innerHTML=
+    '<div class="stone">🪦</div>'+
+    '<h3>'+escapeHtml(g.name)+'</h3>'+
+    '<div class="meta">'+escapeHtml(years(g))+'</div>'+
+    '<p class="epitaph">“'+escapeHtml(g.epitaph||g.description)+'”</p>'+
+    '<span class="tag">'+escapeHtml(causeText(g))+'</span>'+
+    '<div class="respect-count">🌹 '+g.respects+'</div>'+
+    '<button class="cover" aria-label="View grave"></button>';
+   el.querySelector(".cover").onclick=()=>openDetail(g.id);
+   graveyard.appendChild(el);
+ });
+}
+
+function renderStats(){
+ statBuried.textContent=graves.length.toLocaleString();
+ const total=graves.reduce((s,g)=>s+(Number(g.moneyLost)||0),0);
+ statLost.textContent=money(total);
+ statRespect.textContent=graves.reduce((s,g)=>s+(Number(g.respects)||0),0).toLocaleString();
+}
+
+function renderHall(){
+ if(!graves.length){hall.innerHTML="";return}
+ const expensive=[...graves].sort((a,b)=>(b.moneyLost||0)-(a.moneyLost||0))[0];
+ const loved=[...graves].sort((a,b)=>b.respects-a.respects)[0];
+ const latest=[...graves].sort((a,b)=>b.createdAt-a.createdAt)[0];
+ const longest=[...graves].sort((a,b)=>{
+   const ay=(Number(a.died)||Number(a.born)||0)-(Number(a.born)||0);
+   const by=(Number(b.died)||Number(b.born)||0)-(Number(b.born)||0);
+   return by-ay;
+ })[0];
+ const cards=[
+  [T[lang].mostExpensive,expensive.name+" — "+money(expensive.moneyLost)],
+  [T[lang].mostLoved,loved.name+" — 🌹 "+loved.respects],
+  [T[lang].fastest,latest.name],
+  [T[lang].longest,longest.name+" — "+years(longest)]
+ ];
+ hall.innerHTML=cards.map(x=>'<div class="hall-card"><b>'+escapeHtml(x[0])+'</b><span>'+escapeHtml(x[1])+'</span></div>').join("");
+}
+
+function renderCauses(){
+ const counts=T[lang].causes.map((_,i)=>graves.filter(g=>g.causeIndex===i).length);
+ const total=Math.max(1,graves.length);
+ const ranked=counts.map((n,i)=>({n,i})).sort((a,b)=>b.n-a.n).slice(0,4);
+ causes.innerHTML=ranked.map(x=>{
+   const pct=Math.round(x.n/total*100);
+   return '<div class="cause"><div><span>'+escapeHtml(T[lang].causes[x.i])+'</span><div class="bar"><i style="width:'+pct+'%"></i></div></div><b>'+pct+'%</b></div>';
+ }).join("");
+}
+
+function renderAll(){
+ renderI18n();renderGraves();renderStats();renderHall();renderCauses();
+ if(activeId && detailDialog.open) fillDetail(graves.find(g=>g.id===activeId));
+}
+
+function openDetail(id){
+ activeId=id;
+ const g=graves.find(x=>x.id===id);
+ if(!g)return;
+ fillDetail(g);
+ detailDialog.showModal();
+}
+
+function fillDetail(g){
+ graveNumber.textContent="GRAVE #"+g.id;
+ detailName.textContent=g.name;
+ detailYears.textContent=years(g);
+ detailEpitaph.textContent='“'+(g.epitaph||g.description)+'”';
+ detailDescription.textContent=g.description||"—";
+ detailCauseValue.textContent=causeText(g);
+ detailMoneyValue.textContent=money(g.moneyLost);
+ detailTimeValue.textContent=g.timeWasted||"—";
+ detailStory.textContent=g.story||"—";
+ detailStoryWrap.style.display=g.story?"block":"none";
+ respectBtn.innerHTML='🌹 <span data-i18n="respect">'+T[lang].respect+'</span> · '+g.respects;
+}
+
+buryForm.addEventListener("submit",e=>{
+ e.preventDefault();
+ const nextId=(Math.max(...graves.map(g=>g.id),1846)+1);
+ const g={
+   id:nextId,
+   name:projectName.value.trim(),
+   description:description.value.trim(),
+   born:born.value.trim(),
+   died:died.value.trim(),
+   causeIndex:Number(cause.value),
+   epitaph:epitaph.value.trim(),
+   story:story.value.trim(),
+   url:url.value.trim(),
+   moneyLost:Number(moneyLost.value)||0,
+   timeWasted:timeWasted.value.trim(),
+   respects:0,
+   createdAt:Date.now()
+ };
+ graves.push(g);save();buryForm.reset();buryDialog.close();renderAll();openDetail(g.id);
+});
+
+function payRespect(){
+ const g=graves.find(x=>x.id===activeId);if(!g)return;
+ const key="ig-respected-"+g.id;
+ if(localStorage.getItem(key)){showToast(lang==="zh"?"你已經致意過這座墓碑":"You already paid respects");return}
+ g.respects++;localStorage.setItem(key,"1");save();renderAll();fillDetail(g);showToast(T[lang].respected);
+}
+
+async function shareGrave(){
+ const g=graves.find(x=>x.id===activeId);if(!g)return;
+ const text=(lang==="zh"?"我把失敗專案埋進網路墓園了：":"I buried my failed project in the Internet Graveyard: ")+g.name+" — GRAVE #"+g.id;
+ try{
+   if(navigator.share){await navigator.share({title:"Internet Graveyard",text});}
+   else{await navigator.clipboard.writeText(text);showToast(T[lang].copied);}
+ }catch(e){}
+}
+
+function showToast(msg){
+ toast.textContent=msg;toast.classList.add("show");setTimeout(()=>toast.classList.remove("show"),1800);
+}
+function escapeHtml(v){
+ return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+}
+renderAll();
+</script>
+</body>
+</html>
