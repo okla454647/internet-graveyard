@@ -100,19 +100,31 @@ textarea{min-height:92px;resize:vertical}
   font-weight:850;background:var(--accent);color:#111
 }
 .form-note{text-align:center;color:#7f8a81;font-size:12px;margin-top:10px}
-.detail-grave{text-align:center;padding:8px 0 3px}
-.detail-stone{font-size:72px}
+.detail-grave{text-align:center;padding:4px 0 3px}
+.detail-stone{font-size:82px;filter:drop-shadow(0 10px 22px rgba(0,0,0,.35))}
 .buried-badge{
-  display:none;margin:5px auto 15px;width:max-content;border:1px solid #3b4c3f;
-  background:#172019;border-radius:999px;padding:7px 10px;color:#cfe0d1;font-size:12px
+  display:none;margin:4px auto 15px;width:max-content;border:1px solid #3b4c3f;
+  background:#172019;border-radius:999px;padding:7px 11px;color:#cfe0d1;font-size:12px
 }
-.detail-grave h2{font-size:34px;margin:5px 0}
-.detail-meta{color:var(--muted);margin:5px 0 16px}
-.detail-epitaph{font-family:Georgia,serif;font-size:19px;line-height:1.6}
-.detail-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:18px;text-align:left}
+.completion-copy{
+  display:none;margin:0 auto 18px;max-width:440px;color:var(--muted);
+  font-size:14px;line-height:1.65
+}
+.detail-grave h2{font-size:36px;margin:4px 0 3px}
+.grave-id-hero{color:#879187;font-size:12px;letter-spacing:.12em;margin-bottom:10px}
+.detail-meta{color:var(--muted);margin:4px 0 14px}
+.detail-epitaph{
+  font-family:Georgia,serif;font-size:20px;line-height:1.65;
+  max-width:500px;margin:0 auto;color:#f1eee6
+}
+.detail-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:20px;text-align:left}
 .detail-item{border:1px solid var(--line);border-radius:13px;padding:13px;background:#0c110d}
 .detail-item span{display:block;color:var(--muted);font-size:12px;margin-bottom:5px}
-.story{margin-top:14px;border:1px solid var(--line);border-radius:13px;padding:14px;text-align:left;background:#0c110d}
+.story{margin-top:14px;border:1px solid var(--line);border-radius:13px;padding:15px;text-align:left;background:#0c110d}
+.project-link{
+  display:none;margin-top:12px;border:1px solid var(--line);border-radius:12px;
+  padding:11px 13px;background:#0c110d;color:var(--soft);text-decoration:none;font-size:13px
+}
 .actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
 .actions.three{grid-template-columns:1fr 1fr 1fr}
 .action{
@@ -120,6 +132,17 @@ textarea{min-height:92px;resize:vertical}
   padding:12px;border-radius:12px;font-weight:750
 }
 .action.primary{background:var(--accent);color:#111}
+.share-panel{
+  display:none;margin-top:14px;border:1px solid var(--line);border-radius:14px;
+  background:#0c110d;padding:14px;text-align:left
+}
+.share-title{font-weight:800;font-size:14px;margin-bottom:5px}
+.share-copy{color:var(--muted);font-size:13px;line-height:1.55;margin-bottom:12px}
+.share-buttons{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.share-buttons button{
+  border:1px solid var(--line);background:#151c17;color:var(--text);
+  border-radius:10px;padding:9px 6px;font-size:12px
+}
 .toast{
   position:fixed;right:20px;bottom:20px;padding:12px 15px;background:#172019;
   border:1px solid #38513f;border-radius:12px;opacity:0;transform:translateY(12px);
@@ -134,6 +157,7 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding-top:34px}
 }
 @media(max-width:520px){
   .stats,.hall,.row,.detail-grid,.actions,.actions.three{grid-template-columns:1fr}
+  .share-buttons{grid-template-columns:1fr 1fr}
 }
 </style>
 </head>
@@ -224,22 +248,26 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding-top:34px}
 <dialog id="detailDialog">
 <div class="modal">
   <div class="modal-head">
-    <div><div class="small" id="graveNumber"></div></div>
+    <div></div>
     <button class="close" onclick="detailDialog.close()">×</button>
   </div>
   <div class="detail-grave">
     <div class="buried-badge" id="buriedBadge" data-i18n="buriedBadge">✓ 它已經安息了</div>
+    <div class="completion-copy" id="completionCopy" data-i18n="completionCopy">你的專案現在有一個永久墓碑編號。分享它，或把完整故事留給後來的人。</div>
     <div class="detail-stone">🪦</div>
+    <div class="grave-id-hero" id="graveNumber"></div>
     <h2 id="detailName"></h2>
     <div class="detail-meta" id="detailYears"></div>
     <div class="detail-epitaph" id="detailEpitaph"></div>
 
     <div class="detail-grid" id="detailGrid">
-      <div class="detail-item"><span data-i18n="detailWhat">它原本是什麼？</span><b id="detailDescription"></b></div>
-      <div class="detail-item"><span data-i18n="detailCause">死因</span><b id="detailCauseValue"></b></div>
-      <div class="detail-item"><span data-i18n="detailMoney">損失</span><b id="detailMoneyValue"></b></div>
-      <div class="detail-item"><span data-i18n="detailTime">浪費時間</span><b id="detailTimeValue"></b></div>
+      <div class="detail-item" id="detailWhatItem"><span data-i18n="detailWhat">它原本是什麼？</span><b id="detailDescription"></b></div>
+      <div class="detail-item" id="detailCauseItem"><span data-i18n="detailCause">死因</span><b id="detailCauseValue"></b></div>
+      <div class="detail-item" id="detailMoneyItem"><span data-i18n="detailMoney">損失</span><b id="detailMoneyValue"></b></div>
+      <div class="detail-item" id="detailTimeItem"><span data-i18n="detailTime">浪費時間</span><b id="detailTimeValue"></b></div>
     </div>
+
+    <a class="project-link" id="projectLink" target="_blank" rel="noopener noreferrer" data-i18n="viewProject">↗ 查看舊專案</a>
 
     <div class="story" id="detailStoryWrap">
       <div class="small" data-i18n="storyTitle">它是怎麼死的</div>
@@ -248,8 +276,20 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding-top:34px}
 
     <div class="actions three">
       <button class="action primary" id="respectBtn" onclick="payRespect()">🌹 <span data-i18n="respect">致意</span></button>
-      <button class="action" onclick="shareGrave()">🔗 <span data-i18n="share">分享墓碑</span></button>
+      <button class="action" onclick="toggleShare()" data-i18n="share">🔗 分享墓碑</button>
       <button class="action" onclick="openDetails()" data-i18n="addDetails">＋ 補充故事</button>
+    </div>
+
+    <div class="share-panel" id="sharePanel">
+      <div class="share-title" data-i18n="shareTitle">把這個失敗正式公告出去</div>
+      <div class="share-copy" id="shareCopy"></div>
+      <div class="share-buttons">
+        <button onclick="shareTo('x')">X</button>
+        <button onclick="shareTo('threads')">Threads</button>
+        <button onclick="shareTo('reddit')">Reddit</button>
+        <button onclick="shareTo('linkedin')">LinkedIn</button>
+        <button onclick="copyShare()" data-i18n="copyLink">複製</button>
+      </div>
     </div>
   </div>
 </div>
@@ -306,7 +346,8 @@ zh:{
  projectName:"① 它叫什麼？ *",projectNamePh:"例如：My Failed Game",
  cause:"② 它為什麼死了？ *",epitaph:"③ 留一句遺言",epitaphPh:"例如：我真的以為這會成功。",
  submit:"🪦 埋了它",formNote:"建立後會立刻得到一座墓碑。",
- buriedBadge:"✓ 它已經安息了",addDetails:"＋ 補充故事",
+ buriedBadge:"✓ 它已經安息了",completionCopy:"你的專案現在有一個墓碑編號。分享它，或把完整故事留給後來的人。",addDetails:"＋ 補充故事",
+ viewProject:"↗ 查看舊專案",shareTitle:"把這個失敗正式公告出去",copyLink:"複製",
  detailsTitle:"讓這座墓碑更完整",detailsSub:"全部選填。不想寫也沒關係。",
  whatWasIt:"它原本是什麼？",whatWasItPh:"例如：一款獨立遊戲",
  born:"出生年份",died:"死亡年份",storyLabel:"它是怎麼死的？",storyPh:"寫下最後發生了什麼。",
@@ -330,7 +371,8 @@ en:{
  projectName:"① What was it called? *",projectNamePh:"e.g. My Failed Game",
  cause:"② Why did it die? *",epitaph:"③ Leave one last line",epitaphPh:"e.g. I really thought this would work.",
  submit:"🪦 BURY IT",formNote:"You'll get a grave immediately.",
- buriedBadge:"✓ It can rest now",addDetails:"＋ Add the story",
+ buriedBadge:"✓ It can rest now",completionCopy:"Your project now has a grave number. Share it, or leave the full story for whoever finds it later.",addDetails:"＋ Add the story",
+ viewProject:"↗ View old project",shareTitle:"Make the failure official",copyLink:"Copy",
  detailsTitle:"Make this grave more complete",detailsSub:"Everything here is optional.",
  whatWasIt:"What was it?",whatWasItPh:"e.g. An indie game",
  born:"Born",died:"Died",storyLabel:"How did it die?",storyPh:"Tell us what happened in the end.",
@@ -452,17 +494,32 @@ function openDetail(id,isNew){
 
 function fillDetail(g){
  graveNumber.textContent="GRAVE #"+g.id;
- buriedBadge.style.display=(justCreatedId===g.id)?"block":"none";
+ const isNew=justCreatedId===g.id;
+ buriedBadge.style.display=isNew?"block":"none";
+ completionCopy.style.display=isNew?"block":"none";
  detailName.textContent=g.name;
  detailYears.textContent=years(g);
+ detailYears.style.display=(g.born||g.died)?"block":"none";
  detailEpitaph.textContent='“'+(g.epitaph||g.description||"R.I.P.")+'”';
- detailDescription.textContent=g.description||"—";
+
+ detailDescription.textContent=g.description||"";
+ detailWhatItem.style.display=g.description?"block":"none";
  detailCauseValue.textContent=causeText(g);
+ detailCauseItem.style.display="block";
  detailMoneyValue.textContent=money(g.moneyLost);
- detailTimeValue.textContent=g.timeWasted||"—";
- detailStory.textContent=g.story||"—";
+ detailMoneyItem.style.display=g.moneyLost?"block":"none";
+ detailTimeValue.textContent=g.timeWasted||"";
+ detailTimeItem.style.display=g.timeWasted?"block":"none";
+
+ detailStory.textContent=g.story||"";
  detailStoryWrap.style.display=g.story?"block":"none";
+
+ projectLink.style.display=g.url?"inline-block":"none";
+ if(g.url) projectLink.href=g.url;
+
  respectBtn.innerHTML='🌹 '+T[lang].respect+' · '+g.respects;
+ sharePanel.style.display="none";
+ shareCopy.textContent=buildShareText(g);
 }
 
 buryForm.addEventListener("submit",e=>{
@@ -509,13 +566,30 @@ function payRespect(){
  g.respects++;localStorage.setItem(key,"1");save();renderAll();fillDetail(g);showToast(T[lang].respected);
 }
 
-async function shareGrave(){
+function buildShareText(g){
+ const last=g.epitaph?(' “'+g.epitaph+'”'):"";
+ return lang==="zh"
+   ? g.name+" 正式宣告死亡。🪦 "+last+" — Internet Graveyard · GRAVE #"+g.id
+   : g.name+" is officially dead. 🪦 "+last+" — Internet Graveyard · GRAVE #"+g.id;
+}
+function toggleShare(){
+ sharePanel.style.display=sharePanel.style.display==="block"?"none":"block";
+}
+function shareTo(platform){
  const g=graves.find(x=>x.id===activeId);if(!g)return;
- const text=(lang==="zh"?"我把失敗專案埋進網路墓園了：":"I buried my failed project in the Internet Graveyard: ")+g.name+" — GRAVE #"+g.id;
- try{
-   if(navigator.share){await navigator.share({title:"Internet Graveyard",text});}
-   else{await navigator.clipboard.writeText(text);showToast(T[lang].copied);}
- }catch(e){}
+ const text=buildShareText(g);
+ const url=location.href.split("#")[0]+"#grave-"+g.id;
+ let target="";
+ if(platform==="x") target="https://twitter.com/intent/tweet?text="+encodeURIComponent(text+" "+url);
+ if(platform==="threads") target="https://www.threads.net/intent/post?text="+encodeURIComponent(text+" "+url);
+ if(platform==="reddit") target="https://www.reddit.com/submit?url="+encodeURIComponent(url)+"&title="+encodeURIComponent(text);
+ if(platform==="linkedin") target="https://www.linkedin.com/sharing/share-offsite/?url="+encodeURIComponent(url);
+ if(target) window.open(target,"_blank","noopener,noreferrer");
+}
+async function copyShare(){
+ const g=graves.find(x=>x.id===activeId);if(!g)return;
+ const text=buildShareText(g)+" "+location.href.split("#")[0]+"#grave-"+g.id;
+ try{await navigator.clipboard.writeText(text);showToast(T[lang].copied)}catch(e){}
 }
 
 function showToast(msg){
