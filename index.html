@@ -421,8 +421,8 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding-top:34px}
   </div>
   <form id="buryForm">
     <div class="type-choice">
-      <button type="button" id="typeProjectBtn" class="active" onclick="setBuryType('project')"><b>🪦 Project Grave</b><span id="typeProjectHelp">結束的 App、遊戲、網站、創業或頻道</span></button>
-      <button type="button" id="typeMemorialBtn" onclick="setBuryType('memorial')"><b>🕯️ Memorial</b><span id="typeMemorialHelp">寵物、回憶、人生階段或值得留下的事物</span></button>
+      <button type="button" id="typeProjectBtn" class="active" onclick="setBuryType('project')"><b id="typeProjectTitle">🪦 專案墓碑</b><span id="typeProjectHelp">結束的 App、遊戲、網站、創業或頻道</span></button>
+      <button type="button" id="typeMemorialBtn" onclick="setBuryType('memorial')"><b id="typeMemorialTitle">🕯️ 紀念碑</b><span id="typeMemorialHelp">寵物、回憶、人生階段或值得留下的事物</span></button>
     </div>
     <label id="nameLabel" data-i18n="projectName">① 它叫什麼？ *</label>
     <input id="projectName" required maxlength="60" data-ph="projectNamePh">
@@ -1039,8 +1039,10 @@ function renderI18n(){
    }
  }
  if(typeof projectGardenBtn!=="undefined"){
-   projectGardenBtn.textContent="🪦 Project Graveyard";
-   memorialGardenBtn.textContent="🕯️ Memorial Garden";
+   projectGardenBtn.textContent=lang==="zh"?"🪦 專案墓園":"🪦 Project Graveyard";
+   memorialGardenBtn.textContent=lang==="zh"?"🕯️ 紀念花園":"🕯️ Memorial Garden";
+   typeProjectTitle.textContent=lang==="zh"?"🪦 專案墓碑":"🪦 Project Grave";
+   typeMemorialTitle.textContent=lang==="zh"?"🕯️ 紀念碑":"🕯️ Memorial";
    typeProjectHelp.textContent=lang==="zh"?"結束的 App、遊戲、網站、創業或頻道":"Ended apps, games, websites, startups or channels";
    typeMemorialHelp.textContent=lang==="zh"?"寵物、回憶、人生階段或值得留下的事物":"Pets, memories, life chapters or things worth remembering";
    applyGardenUI();
