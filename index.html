@@ -57,6 +57,13 @@ h2{margin:0;font-size:28px}.small{color:var(--muted);font-size:14px;margin-top:5
 }
 .filter-btn.active{background:var(--accent);color:#111;border-color:var(--accent)}
 .result-count{color:var(--muted);font-size:12px;margin:-6px 0 12px}
+.load-more-wrap{text-align:center;margin-top:18px}
+.load-more{
+  display:none;border:1px solid var(--line);background:#141b16;color:var(--text);
+  padding:12px 18px;border-radius:11px;font-weight:750
+}
+.load-more:hover{border-color:#526056;background:#182019}
+.load-more:disabled{opacity:.55;cursor:default}
 .graveyard{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
 .grave{
   position:relative;min-height:230px;border:1px solid var(--line);
@@ -261,6 +268,9 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding-top:34px}
   </div>
   <div class="result-count" id="graveResultCount"></div>
   <div class="graveyard" id="graveyard"></div>
+  <div class="load-more-wrap">
+    <button class="load-more" id="loadMoreBtn" onclick="loadMoreGraves()">載入更多墓碑</button>
+  </div>
 </section>
 
 <section>
@@ -488,21 +498,26 @@ let graves=[];
 let activeId=null;
 let justCreatedId=null;
 let isLoading=true;
+let isLoadingMore=false;
 let graveSearchText="";
 let graveFilter="all";
 let graveSortMode="latest";
+let graveTotal=0;
+const GRAVE_PAGE_SIZE=9;
+let searchTimer=null;
 
 function setGraveSearch(v){
- graveSearchText=String(v||"").trim().toLowerCase();
- renderGraves();
+ graveSearchText=String(v||"").trim();
+ clearTimeout(searchTimer);
+ searchTimer=setTimeout(()=>loadGraves(true),220);
 }
 function setGraveFilter(v){
  graveFilter=v;
- renderGraves();
+ loadGraves(true);
 }
 function setGraveSort(v){
  graveSortMode=v;
- renderGraves();
+ loadGraves(true);
 }
 function sufferingScore(g){
  const b=Number(g.born)||0,d=Number(g.died)||0;
@@ -529,25 +544,95 @@ function fromRow(r){
  };
 }
 
-async function loadGraves(){
- isLoading=true;
+function buildGraveQuery(){
+ let q=supabaseClient
+   .from("graves")
+   .select(PUBLIC_GRAVE_COLUMNS,{count:"exact"});
+
+ if(graveFilter==="dead") q=q.eq("resurrected",false);
+ if(graveFilter==="resurrected") q=q.eq("resurrected",true);
+ if(graveFilter==="story") q=q.or("story.not.is.null,description.not.is.null");
+
+ if(graveSearchText){
+   const term=graveSearchText.replace(/[%_,()"']/g," ").trim();
+   if(term){
+     const p="%"+term+"%";
+     q=q.or("name.ilike."+p+",epitaph.ilike."+p+",description.ilike."+p+",story.ilike."+p+",time_wasted.ilike."+p);
+   }
+ }
+
+ if(graveSortMode==="respects"){
+   q=q.order("respects",{ascending:false}).order("created_at",{ascending:false});
+ }else if(graveSortMode==="loss"){
+   q=q.order("money_lost",{ascending:false}).order("created_at",{ascending:false});
+ }else{
+   q=q.order("created_at",{ascending:false});
+ }
+ return q;
+}
+
+async function loadGraves(reset=true){
+ if(reset){
+   isLoading=true;
+   graves=[];
+ }
  try{
-   const {data,error}=await supabaseClient
-     .from("graves")
-     .select(PUBLIC_GRAVE_COLUMNS)
-     .order("created_at",{ascending:false})
-     .limit(100);
-   if(error) throw error;
-   graves=(data||[]).map(fromRow);
+   if(graveSortMode==="suffering"){
+     const q=buildGraveQuery().range(0,999);
+     const {data,error,count}=await q;
+     if(error) throw error;
+     const all=(data||[]).map(fromRow).sort((a,b)=>sufferingScore(b)-sufferingScore(a)||new Date(b.createdAt)-new Date(a.createdAt));
+     graveTotal=count??all.length;
+     graves=all.slice(0,GRAVE_PAGE_SIZE);
+   }else{
+     const {data,error,count}=await buildGraveQuery().range(0,GRAVE_PAGE_SIZE-1);
+     if(error) throw error;
+     graves=(data||[]).map(fromRow);
+     graveTotal=count??graves.length;
+   }
  }catch(err){
    console.error("Supabase load failed",err);
    graves=[];
+   graveTotal=0;
    const detail=err?.message||String(err||"unknown error");
    showToast((lang==="zh"?"資料庫連線失敗：":"Database connection failed: ")+detail.slice(0,180));
  }finally{
    isLoading=false;
    renderAll();
    openGraveFromHash();
+ }
+}
+
+async function loadMoreGraves(){
+ if(isLoadingMore||graves.length>=graveTotal)return;
+ isLoadingMore=true;
+ if(typeof loadMoreBtn!=="undefined"){
+   loadMoreBtn.disabled=true;
+   loadMoreBtn.textContent=lang==="zh"?"載入中…":"Loading…";
+ }
+ try{
+   if(graveSortMode==="suffering"){
+     const {data,error}=await buildGraveQuery().range(0,999);
+     if(error) throw error;
+     const all=(data||[]).map(fromRow).sort((a,b)=>sufferingScore(b)-sufferingScore(a)||new Date(b.createdAt)-new Date(a.createdAt));
+     graves=all.slice(0,Math.min(graves.length+GRAVE_PAGE_SIZE,all.length));
+   }else{
+     const start=graves.length;
+     const end=start+GRAVE_PAGE_SIZE-1;
+     const {data,error,count}=await buildGraveQuery().range(start,end);
+     if(error) throw error;
+     const incoming=(data||[]).map(fromRow);
+     graves=[...graves,...incoming];
+     if(count!=null) graveTotal=count;
+   }
+   renderAll();
+ }catch(err){
+   console.error("Load more failed",err);
+   const detail=err?.message||String(err||"unknown error");
+   showToast((lang==="zh"?"載入失敗：":"Load failed: ")+detail.slice(0,180));
+ }finally{
+   isLoadingMore=false;
+   renderGraves();
  }
 }
 
@@ -594,6 +679,9 @@ function renderI18n(){
    graveSort.options[1].text=lang==="zh"?"最多致意":"Most respects";
    graveSort.options[2].text=lang==="zh"?"損失最高":"Highest loss";
    graveSort.options[3].text=lang==="zh"?"最久折磨":"Longest suffering";
+   if(typeof loadMoreBtn!=="undefined" && !isLoadingMore){
+     loadMoreBtn.textContent=lang==="zh"?"載入更多墓碑":"Load more graves";
+   }
  }
  if(typeof optionalFields!=="undefined" && typeof optionalToggle!=="undefined"){
    optionalToggle.textContent=optionalFields.classList.contains("open")?T[lang].lessOptional:T[lang].moreOptional;
@@ -606,39 +694,26 @@ function renderGraves(){
    graveyard.innerHTML='<div style="grid-column:1/-1;color:var(--muted);padding:30px 0">'+(lang==="zh"?"正在打開墓園…":"Opening the graveyard…")+'</div>';
    return;
  }
- let list=[...graves];
-
- if(graveSearchText){
-   list=list.filter(g=>[
-     g.name,g.epitaph,g.description,g.story,g.timeWasted,causeText(g)
-   ].some(v=>String(v||"").toLowerCase().includes(graveSearchText)));
- }
-
- if(graveFilter==="dead") list=list.filter(g=>!g.resurrected);
- if(graveFilter==="resurrected") list=list.filter(g=>g.resurrected);
- if(graveFilter==="story") list=list.filter(g=>Boolean(g.story||g.description));
-
- if(graveSortMode==="respects"){
-   list.sort((a,b)=>b.respects-a.respects||new Date(b.createdAt)-new Date(a.createdAt));
- }else if(graveSortMode==="loss"){
-   list.sort((a,b)=>b.moneyLost-a.moneyLost||new Date(b.createdAt)-new Date(a.createdAt));
- }else if(graveSortMode==="suffering"){
-   list.sort((a,b)=>sufferingScore(b)-sufferingScore(a)||new Date(b.createdAt)-new Date(a.createdAt));
- }else{
-   list.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
- }
-
- const totalMatches=list.length;
- list=list.slice(0,9);
+ const list=[...graves];
 
  if(typeof graveResultCount!=="undefined"){
-   graveResultCount.textContent=lang==="zh"?"找到 "+totalMatches+" 座墓碑":"Showing "+totalMatches+" graves";
+   graveResultCount.textContent=lang==="zh"
+     ?"顯示 "+list.length+" / "+graveTotal+" 座墓碑"
+     :"Showing "+list.length+" of "+graveTotal+" graves";
  }
  if(typeof filterAll!=="undefined"){
    filterAll.classList.toggle("active",graveFilter==="all");
    filterDead.classList.toggle("active",graveFilter==="dead");
    filterRise.classList.toggle("active",graveFilter==="resurrected");
    filterStory.classList.toggle("active",graveFilter==="story");
+ }
+ if(typeof loadMoreBtn!=="undefined"){
+   const hasMore=list.length<graveTotal;
+   loadMoreBtn.style.display=hasMore?"inline-block":"none";
+   loadMoreBtn.disabled=isLoadingMore;
+   loadMoreBtn.textContent=isLoadingMore
+     ?(lang==="zh"?"載入中…":"Loading…")
+     :(lang==="zh"?"載入更多墓碑":"Load more graves");
  }
 
  if(!list.length){
