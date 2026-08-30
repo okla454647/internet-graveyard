@@ -292,7 +292,7 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding-top:34px}
     <div class="actions three">
       <button class="action primary" id="respectBtn" onclick="payRespect()">🌹 <span data-i18n="respect">致意</span></button>
       <button class="action" onclick="toggleShare()" data-i18n="share">🔗 分享墓碑</button>
-      <button class="action" onclick="openDetails()" data-i18n="addDetails">＋ 補充故事</button>
+      <button class="action" id="editDetailsBtn" onclick="openDetails()" data-i18n="addDetails">＋ 補充故事</button>
     </div>
 
     <div class="share-panel" id="sharePanel">
@@ -409,6 +409,16 @@ en:{
 const SUPABASE_URL="https://csbgmzfvwqwhcbvvhgxw.supabase.co";
 const SUPABASE_KEY="sb_publishable_-Yq8Zt1tR2Kll07EXuKavA_yX4I56H3";
 const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const PUBLIC_GRAVE_COLUMNS="id,name,cause_index,epitaph,description,story,born_year,died_year,project_url,money_lost,time_wasted,respects,created_at";
+
+function makeOwnerToken(){
+  if(window.crypto?.randomUUID) return crypto.randomUUID();
+  const bytes=new Uint8Array(24);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes,b=>b.toString(16).padStart(2,"0")).join("");
+}
+function ownerKey(id){ return "ig-owner-token-"+id; }
+function getOwnerToken(id){ return localStorage.getItem(ownerKey(id))||""; }
 
 let lang=localStorage.getItem("ig-lang")||"zh";
 let graves=[];
@@ -439,7 +449,7 @@ async function loadGraves(){
  try{
    const {data,error}=await supabaseClient
      .from("graves")
-     .select("*")
+     .select(PUBLIC_GRAVE_COLUMNS)
      .order("created_at",{ascending:false})
      .limit(100);
    if(error) throw error;
@@ -596,6 +606,9 @@ function fillDetail(g){
  if(g.url) projectLink.href=g.url;
 
  respectBtn.innerHTML='🌹 '+T[lang].respect+' · '+g.respects;
+ if(typeof editDetailsBtn!=="undefined"){
+   editDetailsBtn.style.display=getOwnerToken(g.id)?"block":"none";
+ }
  sharePanel.style.display="none";
  shareCopy.textContent=buildShareText(g);
 }
@@ -607,18 +620,21 @@ buryForm.addEventListener("submit",async e=>{
  submitBtn.disabled=true;
  submitBtn.textContent=lang==="zh"?"正在下葬…":"Burying…";
  try{
+   const ownerToken=makeOwnerToken();
    const payload={
      name:projectName.value.trim(),
      cause_index:Number(cause.value),
-     epitaph:epitaph.value.trim()||null
+     epitaph:epitaph.value.trim()||null,
+     owner_token:ownerToken
    };
    const {data,error}=await supabaseClient
      .from("graves")
      .insert(payload)
-     .select()
+     .select(PUBLIC_GRAVE_COLUMNS)
      .single();
    if(error) throw error;
    const g=fromRow(data);
+   localStorage.setItem(ownerKey(g.id),ownerToken);
    graves.unshift(g);
    buryDialog.close();
    buryForm.reset();
@@ -641,6 +657,11 @@ buryForm.addEventListener("submit",async e=>{
 
 function openDetails(){
  const g=graves.find(x=>x.id===activeId);if(!g)return;
+ const token=getOwnerToken(g.id);
+ if(!token){
+   showToast(lang==="zh"?"只有建立這座墓碑的瀏覽器可以編輯":"Only the browser that created this grave can edit it");
+   return;
+ }
  description.value=g.description||"";
  born.value=g.born||"";
  died.value=g.died||"";
@@ -683,16 +704,30 @@ detailsForm.addEventListener("submit",async e=>{
      project_url:url.value.trim()||null
    };
 
-   const {data,error}=await supabaseClient
-     .from("graves")
-     .update(payload)
-     .eq("id",g.id)
-     .select()
-     .single();
+   const token=getOwnerToken(g.id);
+   if(!token) throw new Error(lang==="zh"?"找不到這座墓碑的編輯鑰匙":"Edit key not found");
 
+   const {error}=await supabaseClient.rpc("update_grave_details",{
+     grave_id:g.id,
+     edit_token:token,
+     new_description:payload.description,
+     new_story:payload.story,
+     new_time_wasted:payload.time_wasted,
+     new_born_year:payload.born_year,
+     new_died_year:payload.died_year,
+     new_money_lost:payload.money_lost,
+     new_project_url:payload.project_url
+   });
    if(error) throw error;
 
-   const updated=fromRow(data);
+   const {data:updatedRow,error:reloadError}=await supabaseClient
+     .from("graves")
+     .select(PUBLIC_GRAVE_COLUMNS)
+     .eq("id",g.id)
+     .single();
+   if(reloadError) throw reloadError;
+
+   const updated=fromRow(updatedRow);
    const idx=graves.findIndex(x=>x.id===g.id);
    if(idx!==-1) graves[idx]=updated;
 
