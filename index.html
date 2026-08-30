@@ -227,6 +227,38 @@ textarea{min-height:92px;resize:vertical}
   transition:.2s;pointer-events:none
 }
 .toast.show{opacity:1;transform:translateY(0)}
+.admin-shell{display:none;max-width:1180px;margin:0 auto;padding:30px 22px 70px}
+.admin-top{display:flex;justify-content:space-between;gap:14px;align-items:center;margin-bottom:20px}
+.admin-top h1{margin:0;font-size:28px}
+.admin-login{max-width:430px;margin:90px auto 0;border:1px solid var(--line);background:var(--panel);border-radius:18px;padding:24px}
+.admin-login h2{margin:0 0 6px}
+.admin-error{color:#ffb6b6;font-size:13px;margin-top:10px;min-height:18px}
+.admin-toolbar{display:flex;gap:10px;align-items:center;margin:0 0 14px}
+.admin-toolbar input{margin:0}
+.admin-count{color:var(--muted);font-size:13px;white-space:nowrap}
+.admin-list{display:grid;gap:10px}
+.admin-row{
+  display:grid;grid-template-columns:72px minmax(160px,1fr) 110px 90px 160px auto;
+  gap:10px;align-items:center;border:1px solid var(--line);background:var(--panel);
+  border-radius:14px;padding:12px
+}
+.admin-row.hidden{opacity:.68;border-color:#594b38}
+.admin-id{color:var(--muted);font-size:12px}
+.admin-name{font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.admin-status{font-size:12px;color:var(--muted)}
+.admin-actions{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}
+.admin-actions button{
+  border:1px solid var(--line);background:#151c17;color:var(--text);
+  border-radius:9px;padding:7px 9px;font-size:12px
+}
+.admin-actions .danger{border-color:#6d3d3d;color:#ffbaba;background:#1d1111}
+.admin-actions .warn{border-color:#66553b;color:#ead5ab;background:#1b160f}
+.admin-logout{border:1px solid var(--line);background:#151c17;color:var(--text);border-radius:10px;padding:9px 12px}
+@media(max-width:820px){
+  .admin-row{grid-template-columns:1fr}
+  .admin-actions{justify-content:flex-start}
+  .admin-toolbar{flex-direction:column;align-items:stretch}
+}
 footer{text-align:center;color:var(--muted);font-size:13px;padding-top:34px}
 @media(max-width:820px){
   .grave-tools{grid-template-columns:1fr}
@@ -316,6 +348,37 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding-top:34px}
 </section>
 
 <footer data-i18n="footer">Internet Graveyard · 讓失敗有個好看的結局。</footer>
+</div>
+
+<div class="admin-shell" id="adminShell">
+  <div class="admin-login" id="adminLogin">
+    <h2>🔐 Internet Graveyard Admin</h2>
+    <div class="small">管理員登入</div>
+    <form id="adminLoginForm">
+      <label>Email</label>
+      <input id="adminEmail" type="email" autocomplete="username" required>
+      <label>Password</label>
+      <input id="adminPassword" type="password" autocomplete="current-password" required>
+      <button class="submit" type="submit">登入管理後台</button>
+      <div class="admin-error" id="adminLoginError"></div>
+    </form>
+  </div>
+
+  <div id="adminPanel" style="display:none">
+    <div class="admin-top">
+      <div>
+        <h1>🪦 墓園管理後台</h1>
+        <div class="small">隱藏、恢復或永久刪除墓碑</div>
+      </div>
+      <button class="admin-logout" onclick="adminLogout()">登出</button>
+    </div>
+
+    <div class="admin-toolbar">
+      <input id="adminSearch" type="search" placeholder="搜尋墓碑名稱或 ID…" oninput="renderAdminGraves()">
+      <div class="admin-count" id="adminCount"></div>
+    </div>
+    <div class="admin-list" id="adminList"></div>
+  </div>
 </div>
 
 <dialog id="buryDialog">
@@ -536,6 +599,9 @@ let graveTotal=0;
 const GRAVE_PAGE_SIZE=9;
 let searchTimer=null;
 
+let adminGraves=[];
+let adminMode=new URLSearchParams(location.search).get("admin")==="1";
+
 function setGraveSearch(v){
  graveSearchText=String(v||"").trim();
  clearTimeout(searchTimer);
@@ -561,6 +627,155 @@ function collapseGraves(){
 function sufferingScore(g){
  const b=Number(g.born)||0,d=Number(g.died)||0;
  return b&&d?Math.max(0,d-b):0;
+}
+
+async function verifyAdmin(){
+ const {data,error}=await supabaseClient.rpc("is_graveyard_admin");
+ if(error) throw error;
+ return data===true;
+}
+
+async function initAdminMode(){
+ if(!adminMode)return false;
+
+ const siteWrap=document.querySelector(".wrap");
+ if(siteWrap)siteWrap.style.display="none";
+ adminShell.style.display="block";
+
+ const {data}=await supabaseClient.auth.getSession();
+ if(data?.session){
+   try{
+     if(await verifyAdmin()){
+       await openAdminPanel();
+       return true;
+     }
+   }catch(e){
+     console.error("Admin verification failed",e);
+   }
+   await supabaseClient.auth.signOut();
+ }
+ adminLogin.style.display="block";
+ adminPanel.style.display="none";
+ return true;
+}
+
+adminLoginForm.addEventListener("submit",async e=>{
+ e.preventDefault();
+ adminLoginError.textContent="";
+ const btn=adminLoginForm.querySelector(".submit");
+ const old=btn.textContent;
+ btn.disabled=true;
+ btn.textContent="登入中…";
+ try{
+   const {error}=await supabaseClient.auth.signInWithPassword({
+     email:adminEmail.value.trim(),
+     password:adminPassword.value
+   });
+   if(error)throw error;
+   if(!(await verifyAdmin())){
+     await supabaseClient.auth.signOut();
+     throw new Error("這個帳號不是管理員");
+   }
+   adminPassword.value="";
+   await openAdminPanel();
+ }catch(err){
+   adminLoginError.textContent=err?.message||"登入失敗";
+ }finally{
+   btn.disabled=false;
+   btn.textContent=old;
+ }
+});
+
+async function openAdminPanel(){
+ adminLogin.style.display="none";
+ adminPanel.style.display="block";
+ await loadAdminGraves();
+}
+
+async function adminLogout(){
+ await supabaseClient.auth.signOut();
+ adminGraves=[];
+ adminPanel.style.display="none";
+ adminLogin.style.display="block";
+ adminEmail.value="";
+ adminPassword.value="";
+ adminLoginError.textContent="";
+}
+
+async function loadAdminGraves(){
+ adminList.innerHTML='<div class="small">讀取墓碑中…</div>';
+ try{
+   const {data,error}=await supabaseClient.rpc("admin_list_graves");
+   if(error)throw error;
+   adminGraves=Array.isArray(data)?data:[];
+   renderAdminGraves();
+ }catch(err){
+   adminList.innerHTML='<div class="admin-error">讀取失敗：'+escapeHtml(err?.message||err)+'</div>';
+ }
+}
+
+function renderAdminGraves(){
+ const q=String(adminSearch?.value||"").trim().toLowerCase();
+ const list=adminGraves.filter(g=>{
+   if(!q)return true;
+   return String(g.id).includes(q)||String(g.name||"").toLowerCase().includes(q);
+ });
+ adminCount.textContent="顯示 "+list.length+" / "+adminGraves.length+" 座";
+ if(!list.length){
+   adminList.innerHTML='<div class="small">沒有符合的墓碑。</div>';
+   return;
+ }
+ adminList.innerHTML=list.map(g=>{
+   const hidden=Boolean(g.hidden);
+   const resurrected=Boolean(g.resurrected);
+   const created=g.created_at?new Date(g.created_at).toLocaleString("zh-TW"):"—";
+   return '<div class="admin-row '+(hidden?"hidden":"")+'">'+
+     '<div class="admin-id">#'+escapeHtml(g.id)+'</div>'+
+     '<div><div class="admin-name">'+escapeHtml(g.name||"(未命名)")+'</div><div class="admin-status">'+(resurrected?"🌱 已復活":"🪦 已死亡")+(hidden?" · 🙈 已隱藏":"")+'</div></div>'+
+     '<div>🌹 '+Number(g.respects||0)+'</div>'+
+     '<div>'+escapeHtml(g.cause_index??"—")+'</div>'+
+     '<div class="admin-status">'+escapeHtml(created)+'</div>'+
+     '<div class="admin-actions">'+
+       '<button onclick="adminViewGrave('+Number(g.id)+')">查看</button>'+
+       (hidden
+         ?'<button onclick="adminRestoreGrave('+Number(g.id)+')">恢復</button>'
+         :'<button class="warn" onclick="adminHideGrave('+Number(g.id)+')">隱藏</button>')+
+       '<button class="danger" onclick="adminDeleteGrave('+Number(g.id)+')">永久刪除</button>'+
+     '</div>'+
+   '</div>';
+ }).join("");
+}
+
+function adminViewGrave(id){
+ window.open(location.href.split("?")[0].split("#")[0]+"#grave-"+id,"_blank","noopener,noreferrer");
+}
+
+async function adminHideGrave(id){
+ if(!confirm("確定要隱藏 GRAVE #"+id+" 嗎？資料會保留，可隨時恢復。"))return;
+ try{
+   const {error}=await supabaseClient.rpc("admin_hide_grave",{grave_id:id});
+   if(error)throw error;
+   await loadAdminGraves();
+ }catch(err){alert("隱藏失敗："+(err?.message||err))}
+}
+
+async function adminRestoreGrave(id){
+ try{
+   const {error}=await supabaseClient.rpc("admin_restore_grave",{grave_id:id});
+   if(error)throw error;
+   await loadAdminGraves();
+ }catch(err){alert("恢復失敗："+(err?.message||err))}
+}
+
+async function adminDeleteGrave(id){
+ const typed=prompt("永久刪除無法復原。\n若確定要刪除 GRAVE #"+id+"，請輸入："+id);
+ if(typed!==String(id))return;
+ if(!confirm("最後確認：永久刪除 GRAVE #"+id+"？"))return;
+ try{
+   const {error}=await supabaseClient.rpc("admin_delete_grave",{grave_id:id});
+   if(error)throw error;
+   await loadAdminGraves();
+ }catch(err){alert("刪除失敗："+(err?.message||err))}
 }
 
 function fromRow(r){
@@ -1204,8 +1419,11 @@ function openGraveFromHash(){
 }
 
 window.addEventListener("hashchange",openGraveFromHash);
-renderAll();
-loadGraves();
+(async()=>{
+ if(await initAdminMode())return;
+ renderAll();
+ loadGraves();
+})();
 </script>
 </body>
 </html>
