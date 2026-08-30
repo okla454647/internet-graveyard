@@ -68,6 +68,10 @@ h2{margin:0;font-size:28px}.small{color:var(--muted);font-size:14px;margin-top:5
   padding:6px 9px;color:var(--muted);font-size:12px
 }
 .respect-count{position:absolute;right:18px;bottom:16px;color:var(--soft);font-size:13px}
+.card-status{
+  display:inline-flex;align-items:center;margin:0 0 8px;padding:5px 8px;border-radius:999px;
+  border:1px solid #355c3f;background:#122016;color:#c9f0d1;font-size:11px
+}
 .stats{
   display:grid;grid-template-columns:repeat(4,1fr);gap:12px
 }
@@ -121,6 +125,11 @@ textarea{min-height:92px;resize:vertical}
   display:none;margin:4px auto 15px;width:max-content;border:1px solid #3b4c3f;
   background:#172019;border-radius:999px;padding:7px 11px;color:#cfe0d1;font-size:12px
 }
+.resurrected-badge{
+  display:none;margin:4px auto 15px;width:max-content;border:1px solid #3d6848;
+  background:#122016;border-radius:999px;padding:7px 11px;color:#c9f0d1;font-size:12px
+}
+.resurrect-action{display:none;width:100%;margin-top:10px;border-color:#355c3f;background:#132018;color:#d7f0dc}
 .completion-copy{
   display:none;margin:0 auto 18px;max-width:440px;color:var(--muted);
   font-size:14px;line-height:1.65
@@ -212,7 +221,7 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding-top:34px}
     <div class="stat"><b id="statBuried">0</b><span data-i18n="statBuried">已埋葬專案</span></div>
     <div class="stat"><b id="statLost">$0</b><span data-i18n="statLost">據稱損失</span></div>
     <div class="stat"><b id="statRespect">0</b><span data-i18n="statRespect">致意次數</span></div>
-    <div class="stat"><b>0</b><span data-i18n="statRise">死而復生</span></div>
+    <div class="stat"><b id="statRise">0</b><span data-i18n="statRise">死而復生</span></div>
   </div>
 </section>
 
@@ -268,6 +277,7 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding-top:34px}
   </div>
   <div class="detail-grave">
     <div class="buried-badge" id="buriedBadge" data-i18n="buriedBadge">✓ 它已經安息了</div>
+    <div class="resurrected-badge" id="resurrectedBadge"></div>
     <div class="completion-copy" id="completionCopy" data-i18n="completionCopy">你的專案現在有一個永久墓碑編號。分享它，或把完整故事留給後來的人。</div>
     <div class="detail-stone">🪦</div>
     <div class="grave-id-hero" id="graveNumber"></div>
@@ -292,8 +302,9 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding-top:34px}
     <div class="actions three">
       <button class="action primary" id="respectBtn" onclick="payRespect()">🌹 <span data-i18n="respect">致意</span></button>
       <button class="action" onclick="toggleShare()" data-i18n="share">🔗 分享墓碑</button>
-      <button class="action" id="editDetailsBtn" onclick="openDetails()" data-i18n="addDetails">＋ 補充故事</button>
+      <button class="action" id="editDetailsBtn" onclick="openDetails()" data-i18n="addDetails">✎ 編輯 / 補充資訊</button>
     </div>
+    <button class="action resurrect-action" id="resurrectBtn" onclick="resurrectGrave()">🌱 宣布復活</button>
 
     <div class="share-panel" id="sharePanel">
       <div class="share-title" data-i18n="shareTitle">把這個失敗正式公告出去</div>
@@ -377,6 +388,7 @@ zh:{
  respect:"致意",share:"分享墓碑",empty:"這裡還沒有墓碑。埋下第一個失敗專案吧。",
  mostExpensive:"💸 最昂貴死亡",mostLoved:"🌹 最受愛戴墓碑",fastest:"⚡ 最新下葬",longest:"🕰 最久折磨",
  copied:"已複製分享文字",respected:"你獻上了一朵花 🌹",saved:"補充資料已儲存",
+ resurrect:"🌱 宣布復活",resurrected:"🌱 已復活",resurrectConfirm:"確定要宣布這個專案復活嗎？墓碑會保留，但會標記為已復活。",resurrectDone:"它從墓裡爬回來了 🌱",
  causes:["👻 沒有使用者","😴 失去動力","📉 行銷太差","💸 錢燒完了","🔥 過勞","⚔️ 團隊問題","🤖 被 AI 淘汰","🏢 去上班了","💀 糟糕的點子","❓ 不知道","✏️ 其他"]
 },
 en:{
@@ -402,6 +414,7 @@ en:{
  respect:"Pay respects",share:"Share grave",empty:"No graves yet. Bury the first failed project.",
  mostExpensive:"💸 Most Expensive Death",mostLoved:"🌹 Most Loved Grave",fastest:"⚡ Latest Burial",longest:"🕰 Longest Suffering",
  copied:"Share text copied",respected:"You paid your respects 🌹",saved:"Details saved",
+ resurrect:"🌱 Mark as resurrected",resurrected:"🌱 Resurrected",resurrectConfirm:"Mark this project as resurrected? The grave will stay, but it will be marked as alive again.",resurrectDone:"It crawled back out of the grave 🌱",
  causes:["👻 No users","😴 Lost motivation","📉 Bad marketing","💸 Ran out of money","🔥 Burnout","⚔️ Team drama","🤖 AI killed it","🏢 Got a real job","💀 Terrible idea","❓ Nobody knows","✏️ Other"]
 }
 };
@@ -409,7 +422,7 @@ en:{
 const SUPABASE_URL="https://csbgmzfvwqwhcbvvhgxw.supabase.co";
 const SUPABASE_KEY="sb_publishable_-Yq8Zt1tR2Kll07EXuKavA_yX4I56H3";
 const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-const PUBLIC_GRAVE_COLUMNS="id,name,cause_index,epitaph,description,story,born_year,died_year,project_url,money_lost,time_wasted,respects,created_at";
+const PUBLIC_GRAVE_COLUMNS="id,name,cause_index,epitaph,description,story,born_year,died_year,project_url,money_lost,time_wasted,respects,created_at,resurrected,resurrected_at";
 
 function makeOwnerToken(){
   if(window.crypto?.randomUUID) return crypto.randomUUID();
@@ -440,7 +453,9 @@ function fromRow(r){
    moneyLost:Number(r.money_lost||0),
    timeWasted:r.time_wasted||"",
    respects:Number(r.respects||0),
-   createdAt:r.created_at||""
+   createdAt:r.created_at||"",
+   resurrected:Boolean(r.resurrected),
+   resurrectedAt:r.resurrected_at||""
  };
 }
 
@@ -517,6 +532,7 @@ function renderGraves(){
      facts.push('<div class="card-fact"><span class="card-fact-label">'+(lang==="zh"?"損失":"Loss")+'</span><span class="card-fact-value">'+escapeHtml(money(g.moneyLost))+'</span></div>');
    }
    el.innerHTML=
+    (g.resurrected?'<div class="card-status">'+(lang==="zh"?"🌱 已復活":"🌱 Resurrected")+'</div>':'')+
     '<div class="stone">🪦</div>'+
     '<h3>'+escapeHtml(g.name)+'</h3>'+
     '<div class="meta">'+escapeHtml(years(g))+'</div>'+
@@ -533,6 +549,7 @@ function renderStats(){
  statBuried.textContent=graves.length.toLocaleString();
  statLost.textContent=money(graves.reduce((s,g)=>s+(Number(g.moneyLost)||0),0));
  statRespect.textContent=graves.reduce((s,g)=>s+(Number(g.respects)||0),0).toLocaleString();
+ statRise.textContent=graves.filter(g=>g.resurrected).length.toLocaleString();
 }
 
 function renderHall(){
@@ -583,8 +600,16 @@ function openDetail(id,isNew){
 function fillDetail(g){
  graveNumber.textContent="GRAVE #"+g.id;
  const isNew=justCreatedId===g.id;
- buriedBadge.style.display=isNew?"block":"none";
+ buriedBadge.style.display=isNew && !g.resurrected?"block":"none";
  completionCopy.style.display=isNew?"block":"none";
+
+ if(g.resurrected){
+   const when=g.resurrectedAt?new Date(g.resurrectedAt).toLocaleDateString(lang==="zh"?"zh-TW":"en-US"):"";
+   resurrectedBadge.textContent=T[lang].resurrected+(when?" · "+when:"");
+   resurrectedBadge.style.display="block";
+ }else{
+   resurrectedBadge.style.display="none";
+ }
  detailName.textContent=g.name;
  detailYears.textContent=years(g);
  detailYears.style.display=(g.born||g.died)?"block":"none";
@@ -606,8 +631,13 @@ function fillDetail(g){
  if(g.url) projectLink.href=g.url;
 
  respectBtn.innerHTML='🌹 '+T[lang].respect+' · '+g.respects;
+ const ownsGrave=Boolean(getOwnerToken(g.id));
  if(typeof editDetailsBtn!=="undefined"){
-   editDetailsBtn.style.display=getOwnerToken(g.id)?"block":"none";
+   editDetailsBtn.style.display=ownsGrave?"block":"none";
+ }
+ if(typeof resurrectBtn!=="undefined"){
+   resurrectBtn.textContent=T[lang].resurrect;
+   resurrectBtn.style.display=ownsGrave && !g.resurrected?"block":"none";
  }
  sharePanel.style.display="none";
  shareCopy.textContent=buildShareText(g);
@@ -745,6 +775,50 @@ detailsForm.addEventListener("submit",async e=>{
    submitBtn.textContent=oldText;
  }
 });
+
+async function resurrectGrave(){
+ const g=graves.find(x=>x.id===activeId);if(!g||g.resurrected)return;
+ const token=getOwnerToken(g.id);
+ if(!token){
+   showToast(lang==="zh"?"只有建立這座墓碑的瀏覽器可以宣布復活":"Only the creator browser can resurrect this grave");
+   return;
+ }
+ if(!window.confirm(T[lang].resurrectConfirm)) return;
+
+ resurrectBtn.disabled=true;
+ const oldText=resurrectBtn.textContent;
+ resurrectBtn.textContent=lang==="zh"?"復活中…":"Resurrecting…";
+ try{
+   const {error}=await supabaseClient.rpc("resurrect_grave",{
+     grave_id:g.id,
+     edit_token:token
+   });
+   if(error) throw error;
+
+   const {data,error:reloadError}=await supabaseClient
+     .from("graves")
+     .select(PUBLIC_GRAVE_COLUMNS)
+     .eq("id",g.id)
+     .single();
+   if(reloadError) throw reloadError;
+
+   const updated=fromRow(data);
+   const idx=graves.findIndex(x=>x.id===g.id);
+   if(idx!==-1) graves[idx]=updated;
+
+   activeId=updated.id;
+   renderAll();
+   fillDetail(updated);
+   showToast(T[lang].resurrectDone);
+ }catch(err){
+   console.error("Resurrect failed",err);
+   const detail=err?.message||String(err||"unknown error");
+   showToast((lang==="zh"?"復活失敗：":"Resurrection failed: ")+detail.slice(0,180));
+ }finally{
+   resurrectBtn.disabled=false;
+   resurrectBtn.textContent=oldText;
+ }
+}
 
 async function payRespect(){
  const g=graves.find(x=>x.id===activeId);if(!g)return;
