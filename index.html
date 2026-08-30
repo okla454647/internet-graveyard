@@ -646,9 +646,53 @@ function toggleOptional(){
  optionalToggle.textContent=open?T[lang].lessOptional:T[lang].moreOptional;
 }
 
-detailsForm.addEventListener("submit",e=>{
+detailsForm.addEventListener("submit",async e=>{
  e.preventDefault();
- showToast(lang==="zh"?"補充故事的雲端儲存下一步接上":"Cloud saving for extra details is the next step.");
+ const g=graves.find(x=>x.id===activeId);
+ if(!g)return;
+
+ const submitBtn=detailsForm.querySelector(".submit");
+ const oldText=submitBtn.textContent;
+ submitBtn.disabled=true;
+ submitBtn.textContent=lang==="zh"?"儲存中…":"Saving…";
+
+ try{
+   const payload={
+     description:description.value.trim()||null,
+     story:story.value.trim()||null,
+     time_wasted:timeWasted.value.trim()||null,
+     born_year:born.value?Number(born.value):null,
+     died_year:died.value?Number(died.value):null,
+     money_lost:moneyLost.value?Number(moneyLost.value):0,
+     project_url:url.value.trim()||null
+   };
+
+   const {data,error}=await supabaseClient
+     .from("graves")
+     .update(payload)
+     .eq("id",g.id)
+     .select()
+     .single();
+
+   if(error) throw error;
+
+   const updated=fromRow(data);
+   const idx=graves.findIndex(x=>x.id===g.id);
+   if(idx!==-1) graves[idx]=updated;
+
+   detailsDialog.close();
+   activeId=updated.id;
+   renderAll();
+   openDetail(updated.id,false);
+   showToast(T[lang].saved);
+ }catch(err){
+   console.error("Save details failed",err);
+   const detail=err?.message||String(err||"unknown error");
+   showToast((lang==="zh"?"儲存失敗：":"Save failed: ")+detail.slice(0,180));
+ }finally{
+   submitBtn.disabled=false;
+   submitBtn.textContent=oldText;
+ }
 });
 
 async function payRespect(){
