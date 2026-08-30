@@ -60,7 +60,7 @@ h2{margin:0;font-size:28px}.small{color:var(--muted);font-size:14px;margin-top:5
   border-color:#69a878;
   box-shadow:0 0 0 1px rgba(118,210,140,.18),0 0 28px rgba(78,160,98,.18);
 }
-.grave button.cover{position:absolute;inset:0;border:0;background:transparent}
+.grave button.cover{position:absolute;inset:0;border:0;background:transparent;z-index:1}
 .stone{font-size:44px}.grave h3{margin:7px 0 4px;font-size:21px}
 .meta{color:var(--muted);font-size:13px}
 .epitaph{font-size:15px;line-height:1.6;min-height:46px}
@@ -77,8 +77,9 @@ h2{margin:0;font-size:28px}.small{color:var(--muted);font-size:14px;margin-top:5
 }
 .respect-count{position:absolute;right:18px;bottom:16px;color:var(--soft);font-size:13px}
 .card-status{
-  position:relative;display:inline-flex;align-items:center;margin:0 0 8px;padding:5px 8px;border-radius:999px;
-  border:1px solid #355c3f;background:#122016;color:#c9f0d1;font-size:11px
+  position:relative;z-index:2;display:inline-flex;align-items:center;margin:0 0 8px;padding:5px 8px;border-radius:999px;
+  border:1px solid #355c3f;background:#122016;color:#c9f0d1;font-size:11px;
+  cursor:help;pointer-events:auto
 }
 .card-status[data-tooltip]:hover::after{
   content:attr(data-tooltip);
