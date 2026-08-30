@@ -77,8 +77,20 @@ h2{margin:0;font-size:28px}.small{color:var(--muted);font-size:14px;margin-top:5
 }
 .respect-count{position:absolute;right:18px;bottom:16px;color:var(--soft);font-size:13px}
 .card-status{
-  display:inline-flex;align-items:center;margin:0 0 8px;padding:5px 8px;border-radius:999px;
+  position:relative;display:inline-flex;align-items:center;margin:0 0 8px;padding:5px 8px;border-radius:999px;
   border:1px solid #355c3f;background:#122016;color:#c9f0d1;font-size:11px
+}
+.card-status[data-tooltip]:hover::after{
+  content:attr(data-tooltip);
+  position:absolute;left:50%;bottom:calc(100% + 8px);transform:translateX(-50%);
+  width:max-content;max-width:240px;padding:7px 9px;border-radius:9px;
+  background:#0b100c;border:1px solid #355c3f;color:#dce8df;
+  font-size:11px;line-height:1.35;white-space:normal;z-index:5;
+  box-shadow:0 8px 20px rgba(0,0,0,.28)
+}
+.card-status[data-tooltip]:hover::before{
+  content:"";position:absolute;left:50%;bottom:calc(100% + 2px);transform:translateX(-50%);
+  border:5px solid transparent;border-top-color:#355c3f;z-index:5
 }
 .stats{
   display:grid;grid-template-columns:repeat(4,1fr);gap:12px
@@ -547,7 +559,7 @@ function renderGraves(){
      facts.push('<div class="card-fact"><span class="card-fact-label">'+(lang==="zh"?"損失":"Loss")+'</span><span class="card-fact-value">'+escapeHtml(money(g.moneyLost))+'</span></div>');
    }
    el.innerHTML=
-    (g.resurrected?'<div class="card-status">'+(lang==="zh"?"🌱 已復活":"🌱 Resurrected")+'</div>':'')+
+    (g.resurrected?'<div class="card-status" data-tooltip="'+escapeHtml(lang==="zh"?"復活後 12 小時內會保留淡綠色外框與光暈":"A soft green border and glow remain for 12 hours after resurrection")+'">'+(lang==="zh"?"🌱 已復活":"🌱 Resurrected")+'</div>':'')+
     '<div class="stone">🪦</div>'+
     '<h3>'+escapeHtml(g.name)+'</h3>'+
     '<div class="meta">'+escapeHtml(years(g))+'</div>'+
