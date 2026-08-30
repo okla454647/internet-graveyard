@@ -344,6 +344,7 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding-top:34px}
 
 <div class="toast" id="toast"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const T={
 zh:{
@@ -400,11 +401,7 @@ en:{
 
 const SUPABASE_URL="https://xkeadligtknihpgqnyzg.supabase.co";
 const SUPABASE_KEY="sb_publishable_OOG0u3eh6Y2lpEl4gRyVhQ_ewXwiE1U";
-const DB_HEADERS={
-  "apikey":SUPABASE_KEY,
-  "Authorization":"Bearer "+SUPABASE_KEY,
-  "Content-Type":"application/json"
-};
+const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
 let lang=localStorage.getItem("ig-lang")||"zh";
 let graves=[];
@@ -433,17 +430,18 @@ function fromRow(r){
 async function loadGraves(){
  isLoading=true;
  try{
-   const res=await fetch(SUPABASE_URL+"/rest/v1/graves?select=*&order=created_at.desc&limit=100",{headers:DB_HEADERS});
-   if(!res.ok){
-     const detail=await res.text();
-     console.error("Supabase response",res.status,detail);
-     throw new Error(detail||("HTTP "+res.status));
-   }
-   graves=(await res.json()).map(fromRow);
+   const {data,error}=await supabaseClient
+     .from("graves")
+     .select("*")
+     .order("created_at",{ascending:false})
+     .limit(100);
+   if(error) throw error;
+   graves=(data||[]).map(fromRow);
  }catch(err){
    console.error("Supabase load failed",err);
    graves=[];
-   showToast(lang==="zh"?"資料庫連線失敗，請重新整理":"Database connection failed. Please refresh.");
+   const detail=err?.message||String(err||"unknown error");
+   showToast((lang==="zh"?"資料庫連線失敗：":"Database connection failed: ")+detail.slice(0,180));
  }finally{
    isLoading=false;
    renderAll();
@@ -595,14 +593,13 @@ buryForm.addEventListener("submit",async e=>{
      cause_index:Number(cause.value),
      epitaph:epitaph.value.trim()||null
    };
-   const res=await fetch(SUPABASE_URL+"/rest/v1/graves",{
-     method:"POST",
-     headers:{...DB_HEADERS,"Prefer":"return=representation"},
-     body:JSON.stringify(payload)
-   });
-   if(!res.ok) throw new Error(await res.text());
-   const rows=await res.json();
-   const g=fromRow(rows[0]);
+   const {data,error}=await supabaseClient
+     .from("graves")
+     .insert(payload)
+     .select()
+     .single();
+   if(error) throw error;
+   const g=fromRow(data);
    graves.unshift(g);
    buryDialog.close();
    buryForm.reset();
@@ -659,12 +656,8 @@ async function payRespect(){
    return;
  }
  try{
-   const res=await fetch(SUPABASE_URL+"/rest/v1/rpc/increment_grave_respect",{
-     method:"POST",
-     headers:DB_HEADERS,
-     body:JSON.stringify({grave_id:g.id})
-   });
-   if(!res.ok) throw new Error(await res.text());
+   const {error}=await supabaseClient.rpc("increment_grave_respect",{grave_id:g.id});
+   if(error) throw error;
    g.respects++;
    localStorage.setItem(key,"1");
    renderAll();
