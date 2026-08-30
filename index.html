@@ -51,6 +51,17 @@ header{
   background:var(--accent);color:#151712;font-weight:850;font-size:16px
 }
 .hero-note{color:#7e897f;font-size:13px;margin-top:12px}
+.garden-switch{display:flex;justify-content:center;gap:10px;margin:0 auto 24px;flex-wrap:wrap}
+.garden-switch button{border:1px solid var(--line);background:#111713;color:var(--muted);padding:11px 16px;border-radius:999px;font-weight:800}
+.garden-switch button.active{background:var(--accent);color:#111;border-color:var(--accent)}
+body.memorial-mode{background:radial-gradient(circle at top,#1a1a17 0,#0d100d 46%)}
+body.memorial-mode .cta{background:#eee9dc}
+body.memorial-mode .grave{background:#151814;border-color:#383a32}
+body.memorial-mode .stone{filter:saturate(.55)}
+.type-choice{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0 20px}
+.type-choice button{border:1px solid var(--line);background:#0d120e;color:var(--text);border-radius:13px;padding:14px;text-align:left}
+.type-choice button.active{border-color:#8b948a;background:#182019}
+.type-choice b{display:block;margin-bottom:4px}.type-choice span{color:var(--muted);font-size:12px;line-height:1.45;display:block}
 section{padding:38px 0}
 .section-head{display:flex;align-items:end;justify-content:space-between;margin-bottom:18px}
 h2{margin:0;font-size:28px}.small{color:var(--muted);font-size:14px;margin-top:5px}
@@ -278,6 +289,8 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding-top:34px}
   .hero{padding:70px 0 58px}
 }
 @media(max-width:520px){
+  .type-choice{grid-template-columns:1fr}
+
   .stats,.hall,.row,.detail-grid,.actions,.actions.three{grid-template-columns:1fr}
   .share-buttons{grid-template-columns:1fr 1fr}
 }
@@ -294,6 +307,10 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding-top:34px}
 </header>
 
 <section class="hero">
+  <div class="garden-switch">
+    <button id="projectGardenBtn" class="active" onclick="setGarden('project')">🪦 Project Graveyard</button>
+    <button id="memorialGardenBtn" onclick="setGarden('memorial')">🕯️ Memorial Garden</button>
+  </div>
   <div class="hero-kicker" data-i18n="kicker">給那些做到一半、最後放棄的東西。</div>
   <h1 data-i18n="title">有個做失敗的專案？<br>把它埋在這裡。🪦</h1>
   <p data-i18n="subtitle">App、遊戲、網站、Startup、YouTube 頻道，只要你放棄了，都可以替它留一座墓碑。</p>
@@ -331,7 +348,7 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding-top:34px}
   </div>
 </section>
 
-<section>
+<section class="project-only-section">
   <div class="section-head">
     <div><h2 data-i18n="statsTitle">墓園目前有多大？</h2></div>
   </div>
@@ -343,7 +360,7 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding-top:34px}
   </div>
 </section>
 
-<section>
+<section class="project-only-section">
   <div class="section-head">
     <div>
       <h2 data-i18n="hall">☠️ 失敗名人堂</h2>
@@ -403,13 +420,19 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding-top:34px}
     <button class="close" onclick="buryDialog.close()">×</button>
   </div>
   <form id="buryForm">
-    <label data-i18n="projectName">① 它叫什麼？ *</label>
+    <div class="type-choice">
+      <button type="button" id="typeProjectBtn" class="active" onclick="setBuryType('project')"><b>🪦 Project Grave</b><span id="typeProjectHelp">結束的 App、遊戲、網站、創業或頻道</span></button>
+      <button type="button" id="typeMemorialBtn" onclick="setBuryType('memorial')"><b>🕯️ Memorial</b><span id="typeMemorialHelp">寵物、回憶、人生階段或值得留下的事物</span></button>
+    </div>
+    <label id="nameLabel" data-i18n="projectName">① 它叫什麼？ *</label>
     <input id="projectName" required maxlength="60" data-ph="projectNamePh">
 
-    <label data-i18n="cause">② 它為什麼死了？ *</label>
-    <select id="cause" required></select>
+    <div id="projectCauseField">
+      <label data-i18n="cause">② 它為什麼死了？ *</label>
+      <select id="cause" required></select>
+    </div>
 
-    <label data-i18n="epitaph">③ 留一句遺言</label>
+    <label id="epitaphLabel" data-i18n="epitaph">③ 留一句遺言</label>
     <textarea id="epitaph" maxlength="180" data-ph="epitaphPh"></textarea>
 
     <div class="content-warning">
@@ -595,7 +618,7 @@ en:{
 const SUPABASE_URL="https://csbgmzfvwqwhcbvvhgxw.supabase.co";
 const SUPABASE_KEY="sb_publishable_-Yq8Zt1tR2Kll07EXuKavA_yX4I56H3";
 const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-const PUBLIC_GRAVE_COLUMNS="id,name,cause_index,epitaph,description,story,born_year,died_year,project_url,money_lost,time_wasted,respects,created_at,resurrected,resurrected_at";
+const PUBLIC_GRAVE_COLUMNS="id,name,cause_index,epitaph,description,story,born_year,died_year,project_url,money_lost,time_wasted,respects,created_at,resurrected,resurrected_at,grave_type";
 
 function makeOwnerToken(){
   if(window.crypto?.randomUUID) return crypto.randomUUID();
@@ -618,6 +641,8 @@ let graveSortMode="latest";
 let graveTotal=0;
 const GRAVE_PAGE_SIZE=9;
 let searchTimer=null;
+let gardenMode=new URLSearchParams(location.search).get("type")==="memorial"?"memorial":"project";
+let buryType=gardenMode;
 
 let adminGraves=[];
 let adminMode=new URLSearchParams(location.search).get("admin")==="1";
@@ -814,14 +839,16 @@ function fromRow(r){
    respects:Number(r.respects||0),
    createdAt:r.created_at||"",
    resurrected:Boolean(r.resurrected),
-   resurrectedAt:r.resurrected_at||""
+   resurrectedAt:r.resurrected_at||"",
+   graveType:r.grave_type==="memorial"?"memorial":"project"
  };
 }
 
 function buildGraveQuery(){
  let q=supabaseClient
    .from("graves")
-   .select(PUBLIC_GRAVE_COLUMNS,{count:"exact"});
+   .select(PUBLIC_GRAVE_COLUMNS,{count:"exact"})
+   .eq("grave_type",gardenMode);
 
  if(graveFilter==="dead") q=q.eq("resurrected",false);
  if(graveFilter==="resurrected") q=q.eq("resurrected",true);
@@ -920,7 +947,55 @@ function isRecentlyResurrected(g){
 }
 function money(v){return v?new Intl.NumberFormat(lang==="zh"?"zh-TW":"en-US",{style:"currency",currency:"USD",maximumFractionDigits:0}).format(v):"—"}
 function years(g){return [g.born,g.died].filter(Boolean).join(" — ")||"—"}
-function openBury(){buryForm.reset();buryDialog.showModal()}
+function setGarden(type){
+ gardenMode=type==="memorial"?"memorial":"project";
+ buryType=gardenMode;
+ const u=new URL(location.href);
+ if(gardenMode==="memorial")u.searchParams.set("type","memorial"); else u.searchParams.delete("type");
+ history.replaceState(null,"",u.pathname+u.search+u.hash);
+ graveFilter="all";graveSortMode="latest";graveSearchText="";
+ if(typeof graveSearch!=="undefined")graveSearch.value="";
+ applyGardenUI();
+ loadGraves(true);
+}
+function setBuryType(type){buryType=type==="memorial"?"memorial":"project";applyBuryTypeUI()}
+function applyBuryTypeUI(){
+ const memorial=buryType==="memorial";
+ typeProjectBtn.classList.toggle("active",!memorial);
+ typeMemorialBtn.classList.toggle("active",memorial);
+ projectCauseField.style.display=memorial?"none":"block";
+ cause.required=!memorial;
+ nameLabel.textContent=memorial?(lang==="zh"?"① 你想紀念什麼？ *":"① What would you like to remember? *"):(lang==="zh"?"① 它叫什麼？ *":"① What was it called? *");
+ epitaphLabel.textContent=memorial?(lang==="zh"?"② 留一句想說的話":"② Leave a few words"):(lang==="zh"?"③ 留一句遺言":"③ Leave an epitaph");
+ projectName.placeholder=memorial?(lang==="zh"?"例如：Mochi、那間老店、我的高中時光":"e.g. Mochi, the old shop, my high school years"):T[lang].projectNamePh;
+ epitaph.placeholder=memorial?(lang==="zh"?"謝謝你曾經來過。":"Thank you for being here."):T[lang].epitaphPh;
+}
+function applyGardenUI(){
+ const memorial=gardenMode==="memorial";
+ document.body.classList.toggle("memorial-mode",memorial);
+ projectGardenBtn.classList.toggle("active",!memorial);
+ memorialGardenBtn.classList.toggle("active",memorial);
+ const kicker=document.querySelector(".hero-kicker"),title=document.querySelector(".hero h1"),sub=document.querySelector(".hero p"),cta=document.querySelector(".hero .cta");
+ const latest=document.querySelector("[data-i18n='latest']"),latestSub=document.querySelector("[data-i18n='latestSub']");
+ if(memorial){
+   kicker.textContent=lang==="zh"?"給那些已經離開，但仍值得被記得的事物。":"For things that are gone, but still worth remembering.";
+   title.innerHTML=lang==="zh"?"有些事結束了，<br>但不必消失。🕯️":"Some things end,<br>but don't have to disappear. 🕯️";
+   sub.textContent=lang==="zh"?"為寵物、回憶、重要的人生階段，留下一個安靜的地方。":"A quiet place for pets, memories, and meaningful chapters of life.";
+   cta.textContent=lang==="zh"?"🕯️ 建立紀念":"🕯️ Create a memorial";
+   latest.textContent=lang==="zh"?"最近留下的紀念":"Recent memorials";
+   latestSub.textContent=lang==="zh"?"這裡不排名，也不比較。只是把值得記得的事留下來。":"No rankings, no competition. Just things worth remembering.";
+ }else{
+   kicker.textContent=T[lang].kicker; title.innerHTML=escapeHtml(T[lang].title).replace("\n","<br>"); sub.textContent=T[lang].subtitle;cta.textContent=T[lang].bury;
+   latest.textContent=T[lang].latest;latestSub.textContent=T[lang].latestSub;
+ }
+ const projectOnly=document.querySelectorAll(".project-only-section");
+ projectOnly.forEach(x=>x.style.display=memorial?"none":"");
+ if(typeof graveSort!=="undefined"){
+   graveSort.options[2].hidden=memorial;graveSort.options[3].hidden=memorial;
+   if(memorial && (graveSort.value==="loss"||graveSort.value==="suffering")){graveSort.value="latest";graveSortMode="latest"}
+ }
+}
+function openBury(){buryForm.reset();buryType=gardenMode;applyBuryTypeUI();buryDialog.showModal()}
 
 function setLang(l){lang=l;localStorage.setItem("ig-lang",l);renderAll()}
 
@@ -962,6 +1037,14 @@ function renderI18n(){
    if(typeof collapseGravesBtn!=="undefined"){
      collapseGravesBtn.textContent=lang==="zh"?"收起墓碑":"Collapse graves";
    }
+ }
+ if(typeof projectGardenBtn!=="undefined"){
+   projectGardenBtn.textContent="🪦 Project Graveyard";
+   memorialGardenBtn.textContent="🕯️ Memorial Garden";
+   typeProjectHelp.textContent=lang==="zh"?"結束的 App、遊戲、網站、創業或頻道":"Ended apps, games, websites, startups or channels";
+   typeMemorialHelp.textContent=lang==="zh"?"寵物、回憶、人生階段或值得留下的事物":"Pets, memories, life chapters or things worth remembering";
+   applyGardenUI();
+   applyBuryTypeUI();
  }
  if(typeof optionalFields!=="undefined" && typeof optionalToggle!=="undefined"){
    optionalToggle.textContent=optionalFields.classList.contains("open")?T[lang].lessOptional:T[lang].moreOptional;
@@ -1005,13 +1088,13 @@ function renderGraves(){
  }
  list.forEach(g=>{
    const el=document.createElement("article");el.className="grave"+(isRecentlyResurrected(g)?" recently-resurrected":"");
-   const facts=[
+   const facts=g.graveType==="memorial"?[]:[
      '<div class="card-fact"><span class="card-fact-label">'+(lang==="zh"?"死因":"Cause")+'</span><span class="card-fact-value">'+escapeHtml(causeText(g))+'</span></div>'
    ];
-   if(g.timeWasted){
+   if(g.graveType!=="memorial" && g.timeWasted){
      facts.push('<div class="card-fact"><span class="card-fact-label">'+(lang==="zh"?"耗時":"Time")+'</span><span class="card-fact-value">'+escapeHtml(g.timeWasted)+'</span></div>');
    }
-   if(Number(g.moneyLost)>0){
+   if(g.graveType!=="memorial" && Number(g.moneyLost)>0){
      facts.push('<div class="card-fact"><span class="card-fact-label">'+(lang==="zh"?"損失":"Loss")+'</span><span class="card-fact-value">'+escapeHtml(money(g.moneyLost))+'</span></div>');
    }
    el.innerHTML=
@@ -1021,7 +1104,7 @@ function renderGraves(){
     '<div class="meta">'+escapeHtml(years(g))+'</div>'+
     '<p class="epitaph">“'+escapeHtml(g.epitaph||g.description||"R.I.P.")+'”</p>'+
     '<div class="card-facts">'+facts.join("")+'</div>'+
-    '<div class="respect-count">🌹 '+(lang==="zh"?"致意 ":"Respects ")+g.respects+'</div>'+
+    '<div class="respect-count">🌹 '+(g.graveType==="memorial"?(lang==="zh"?"獻花 ":"Flowers "):(lang==="zh"?"致意 ":"Respects "))+g.respects+'</div>'+
     '<button class="cover" aria-label="View grave"></button>';
    el.querySelector(".cover").onclick=()=>openDetail(g.id,false);
    graveyard.appendChild(el);
@@ -1101,11 +1184,11 @@ function fillDetail(g){
  detailDescription.textContent=g.description||"";
  detailWhatItem.style.display=g.description?"block":"none";
  detailCauseValue.textContent=causeText(g);
- detailCauseItem.style.display="block";
+ detailCauseItem.style.display=g.graveType==="memorial"?"none":"block";
  detailMoneyValue.textContent=money(g.moneyLost);
- detailMoneyItem.style.display=g.moneyLost?"block":"none";
+ detailMoneyItem.style.display=g.graveType!=="memorial"&&g.moneyLost?"block":"none";
  detailTimeValue.textContent=g.timeWasted||"";
- detailTimeItem.style.display=g.timeWasted?"block":"none";
+ detailTimeItem.style.display=g.graveType!=="memorial"&&g.timeWasted?"block":"none";
 
  detailStory.textContent=g.story||"";
  detailStoryWrap.style.display=g.story?"block":"none";
@@ -1113,7 +1196,7 @@ function fillDetail(g){
  projectLink.style.display=g.url?"inline-block":"none";
  if(g.url) projectLink.href=g.url;
 
- respectBtn.innerHTML='🌹 '+T[lang].respect+' · '+g.respects;
+ respectBtn.innerHTML='🌹 '+(g.graveType==="memorial"?(lang==="zh"?"獻花":"Leave a flower"):T[lang].respect)+' · '+g.respects;
  const ownsGrave=Boolean(getOwnerToken(g.id));
  if(typeof detailOwnerNote!=="undefined") detailOwnerNote.style.display=ownsGrave?"block":"none";
  if(typeof detailPublicNote!=="undefined") detailPublicNote.style.display=ownsGrave?"none":"block";
@@ -1123,7 +1206,7 @@ function fillDetail(g){
  }
  if(typeof resurrectBtn!=="undefined"){
    resurrectBtn.textContent=T[lang].resurrect;
-   resurrectBtn.style.display=ownsGrave && !g.resurrected?"block":"none";
+   resurrectBtn.style.display=ownsGrave && !g.resurrected && g.graveType!=="memorial"?"block":"none";
  }
  sharePanel.style.display="none";
  shareCopy.textContent=buildShareText(g);
@@ -1164,7 +1247,8 @@ buryForm.addEventListener("submit",async e=>{
      name:projectName.value.trim(),
      cause_index:Number(cause.value),
      epitaph:epitaph.value.trim()||null,
-     owner_token:ownerToken
+     owner_token:ownerToken,
+     grave_type:buryType
    };
    const {data,error}=await supabaseClient
      .from("graves")
@@ -1444,6 +1528,7 @@ function openGraveFromHash(){
 window.addEventListener("hashchange",openGraveFromHash);
 (async()=>{
  if(await initAdminMode())return;
+ applyGardenUI();
  renderAll();
  loadGraves();
 })();
