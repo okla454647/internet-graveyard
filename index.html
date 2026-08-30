@@ -203,6 +203,13 @@ textarea{min-height:92px;resize:vertical}
   display:none;margin-top:12px;border:1px solid var(--line);border-radius:12px;
   padding:11px 13px;background:#0c110d;color:var(--soft);text-decoration:none;font-size:13px
 }
+.detail-owner-note{
+  display:none;margin-top:14px;padding:10px 12px;border:1px solid #35513d;
+  border-radius:11px;background:#101a12;color:#c8d8cb;font-size:12px;line-height:1.5
+}
+.detail-public-note{
+  margin-top:14px;color:var(--muted);font-size:12px;text-align:center
+}
 .actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
 .actions.three{grid-template-columns:1fr 1fr 1fr}
 .action{
@@ -442,6 +449,9 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding-top:34px}
       <div id="detailStory" style="margin-top:7px;line-height:1.65"></div>
     </div>
 
+    <div class="detail-owner-note" id="detailOwnerNote" data-i18n="ownerNote">✓ 這是你的墓碑。你可以編輯資訊，或在專案重新上線時宣布復活。</div>
+    <div class="detail-public-note" id="detailPublicNote" data-i18n="publicNote">訪客可以獻花致意或分享這座墓碑。</div>
+
     <div class="actions three">
       <button class="action primary" id="respectBtn" onclick="payRespect()">🌹 <span data-i18n="respect">致意</span></button>
       <button class="action" onclick="toggleShare()" data-i18n="share">🔗 分享墓碑</button>
@@ -536,7 +546,8 @@ zh:{
  whatWasIt:"它原本是什麼？",whatWasItPh:"例如：一款獨立遊戲",
  born:"出生年份",died:"死亡年份",storyLabel:"它是怎麼死的？",storyPh:"寫下最後發生了什麼。",
  url:"專案網址（可留空）",moneyLost:"💸 損失多少錢？",timeWasted:"⏱ 你浪費了多久？",timePh:"例如：8 個月",moreOptional:"更多選填資料 ▾",lessOptional:"收起選填資料 ▴",saveDetails:"儲存補充資料",
- detailWhat:"它原本是什麼？",detailCause:"死因",detailMoney:"損失",detailTime:"浪費時間",storyTitle:"它是怎麼死的",
+ detailWhat:"它原本是什麼？",detailCause:"死因",detailMoney:"損失",detailTime:"浪費時間",
+ ownerNote:"✓ 這是你的墓碑。你可以編輯資訊，或在專案重新上線時宣布復活。",publicNote:"訪客可以獻花致意或分享這座墓碑。",storyTitle:"它是怎麼死的",
  respect:"致意",share:"分享墓碑",empty:"這裡還沒有墓碑。埋下第一個失敗專案吧。",
  mostExpensive:"💸 最昂貴死亡",mostLoved:"🌹 最受愛戴墓碑",fastest:"⚡ 最新下葬",longest:"🕰 最久折磨",
  copied:"已複製分享文字",copyUrl:"已複製墓碑網址",shareUrlLabel:"墓碑網址",respected:"你獻上了一朵花 🌹",saved:"補充資料已儲存",
@@ -563,7 +574,8 @@ en:{
  whatWasIt:"What was it?",whatWasItPh:"e.g. An indie game",
  born:"Born",died:"Died",storyLabel:"How did it die?",storyPh:"Tell us what happened in the end.",
  url:"Project URL (optional)",moneyLost:"💸 Money Lost",timeWasted:"⏱ How much time did you waste?",timePh:"e.g. 8 months",moreOptional:"More optional details ▾",lessOptional:"Hide optional details ▴",saveDetails:"Save details",
- detailWhat:"What was it?",detailCause:"Cause of death",detailMoney:"Money lost",detailTime:"Time wasted",storyTitle:"How it died",
+ detailWhat:"What was it?",detailCause:"Cause of death",detailMoney:"Money lost",detailTime:"Time wasted",
+ ownerNote:"✓ This is your grave. You can edit its details or announce a resurrection if the project returns.",publicNote:"Visitors can pay respects or share this grave.",storyTitle:"How it died",
  respect:"Pay respects",share:"Share grave",empty:"No graves yet. Bury the first failed project.",
  mostExpensive:"💸 Most Expensive Death",mostLoved:"🌹 Most Loved Grave",fastest:"⚡ Latest Burial",longest:"🕰 Longest Suffering",
  copied:"Share text copied",copyUrl:"Grave URL copied",shareUrlLabel:"Grave URL",respected:"You paid your respects 🌹",saved:"Details saved",
@@ -1095,6 +1107,8 @@ function fillDetail(g){
 
  respectBtn.innerHTML='🌹 '+T[lang].respect+' · '+g.respects;
  const ownsGrave=Boolean(getOwnerToken(g.id));
+ if(typeof detailOwnerNote!=="undefined") detailOwnerNote.style.display=ownsGrave?"block":"none";
+ if(typeof detailPublicNote!=="undefined") detailPublicNote.style.display=ownsGrave?"none":"block";
  if(typeof editDetailsBtn!=="undefined"){
    editDetailsBtn.style.display=ownsGrave?"block":"none";
  }
