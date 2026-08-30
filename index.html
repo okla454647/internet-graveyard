@@ -100,6 +100,14 @@ textarea{min-height:92px;resize:vertical}
   font-weight:850;background:var(--accent);color:#111
 }
 .form-note{text-align:center;color:#7f8a81;font-size:12px;margin-top:10px}
+.optional-toggle{
+  width:100%;margin-top:16px;border:1px solid var(--line);background:#0c110d;color:var(--soft);
+  padding:12px 13px;border-radius:12px;font-weight:750;text-align:left
+}
+.optional-fields{
+  display:none;margin-top:10px;padding-top:4px;border-top:1px solid rgba(255,255,255,.04)
+}
+.optional-fields.open{display:block}
 .detail-grave{text-align:center;padding:4px 0 3px}
 .detail-stone{font-size:82px;filter:drop-shadow(0 10px 22px rgba(0,0,0,.35))}
 .buried-badge{
@@ -308,20 +316,25 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding-top:34px}
     <label data-i18n="whatWasIt">它原本是什麼？</label>
     <input id="description" maxlength="120" data-ph="whatWasItPh">
 
-    <div class="row">
-      <div><label data-i18n="born">出生年份</label><input id="born" type="number" min="1980" max="2100" placeholder="2025"></div>
-      <div><label data-i18n="died">死亡年份</label><input id="died" type="number" min="1980" max="2100" placeholder="2026"></div>
-    </div>
-
     <label data-i18n="storyLabel">它是怎麼死的？</label>
     <textarea id="story" maxlength="1200" data-ph="storyPh"></textarea>
 
-    <label data-i18n="url">專案網址</label>
-    <input id="url" type="url" placeholder="https://">
+    <label data-i18n="timeWasted">⏱ 你浪費了多久？</label>
+    <input id="timeWasted" maxlength="40" data-ph="timePh">
 
-    <div class="row">
-      <div><label data-i18n="moneyLost">💸 損失多少錢？</label><input id="moneyLost" type="number" min="0" step="1" placeholder="3420"></div>
-      <div><label data-i18n="timeWasted">⏱ 浪費多少時間？</label><input id="timeWasted" maxlength="40" data-ph="timePh"></div>
+    <button class="optional-toggle" type="button" id="optionalToggle" onclick="toggleOptional()" data-i18n="moreOptional">更多選填資料 ▾</button>
+
+    <div class="optional-fields" id="optionalFields">
+      <div class="row">
+        <div><label data-i18n="born">出生年份</label><input id="born" type="number" min="1980" max="2100" placeholder="2025"></div>
+        <div><label data-i18n="died">死亡年份</label><input id="died" type="number" min="1980" max="2100" placeholder="2026"></div>
+      </div>
+
+      <label data-i18n="moneyLost">💸 損失多少錢？</label>
+      <input id="moneyLost" type="number" min="0" step="1" placeholder="3420">
+
+      <label data-i18n="url">專案網址（可留空）</label>
+      <input id="url" type="url" placeholder="https://">
     </div>
 
     <button class="submit" type="submit" data-i18n="saveDetails">儲存補充資料</button>
@@ -348,10 +361,10 @@ zh:{
  submit:"🪦 埋了它",formNote:"建立後會立刻得到一座墓碑。",
  buriedBadge:"✓ 它已經安息了",completionCopy:"你的專案現在有一個墓碑編號。分享它，或把完整故事留給後來的人。",addDetails:"＋ 補充故事",
  viewProject:"↗ 查看舊專案",shareTitle:"把這個失敗正式公告出去",copyLink:"複製",
- detailsTitle:"讓這座墓碑更完整",detailsSub:"全部選填。不想寫也沒關係。",
+ detailsTitle:"讓這座墓碑更完整",detailsSub:"只寫你想留下的內容就好。",
  whatWasIt:"它原本是什麼？",whatWasItPh:"例如：一款獨立遊戲",
  born:"出生年份",died:"死亡年份",storyLabel:"它是怎麼死的？",storyPh:"寫下最後發生了什麼。",
- url:"專案網址",moneyLost:"💸 損失多少錢？",timeWasted:"⏱ 浪費多少時間？",timePh:"例如：8 個月",saveDetails:"儲存補充資料",
+ url:"專案網址（可留空）",moneyLost:"💸 損失多少錢？",timeWasted:"⏱ 你浪費了多久？",timePh:"例如：8 個月",moreOptional:"更多選填資料 ▾",lessOptional:"收起選填資料 ▴",saveDetails:"儲存補充資料",
  detailWhat:"它原本是什麼？",detailCause:"死因",detailMoney:"損失",detailTime:"浪費時間",storyTitle:"它是怎麼死的",
  respect:"致意",share:"分享墓碑",empty:"這裡還沒有墓碑。埋下第一個失敗專案吧。",
  mostExpensive:"💸 最昂貴死亡",mostLoved:"🌹 最受愛戴墓碑",fastest:"⚡ 最新下葬",longest:"🕰 最久折磨",
@@ -373,10 +386,10 @@ en:{
  submit:"🪦 BURY IT",formNote:"You'll get a grave immediately.",
  buriedBadge:"✓ It can rest now",completionCopy:"Your project now has a grave number. Share it, or leave the full story for whoever finds it later.",addDetails:"＋ Add the story",
  viewProject:"↗ View old project",shareTitle:"Make the failure official",copyLink:"Copy",
- detailsTitle:"Make this grave more complete",detailsSub:"Everything here is optional.",
+ detailsTitle:"Make this grave more complete",detailsSub:"Only leave what you actually want to share.",
  whatWasIt:"What was it?",whatWasItPh:"e.g. An indie game",
  born:"Born",died:"Died",storyLabel:"How did it die?",storyPh:"Tell us what happened in the end.",
- url:"Project URL",moneyLost:"💸 Money Lost",timeWasted:"⏱ Time Wasted",timePh:"e.g. 8 months",saveDetails:"Save details",
+ url:"Project URL (optional)",moneyLost:"💸 Money Lost",timeWasted:"⏱ How much time did you waste?",timePh:"e.g. 8 months",moreOptional:"More optional details ▾",lessOptional:"Hide optional details ▴",saveDetails:"Save details",
  detailWhat:"What was it?",detailCause:"Cause of death",detailMoney:"Money lost",detailTime:"Time wasted",storyTitle:"How it died",
  respect:"Pay respects",share:"Share grave",empty:"No graves yet. Bury the first failed project.",
  mostExpensive:"💸 Most Expensive Death",mostLoved:"🌹 Most Loved Grave",fastest:"⚡ Latest Burial",longest:"🕰 Longest Suffering",
@@ -423,6 +436,9 @@ function renderI18n(){
    const o=document.createElement("option");o.value=i;o.textContent=x;cause.appendChild(o);
  });
  cause.value=current;
+ if(typeof optionalFields!=="undefined" && typeof optionalToggle!=="undefined"){
+   optionalToggle.textContent=optionalFields.classList.contains("open")?T[lang].lessOptional:T[lang].moreOptional;
+ }
 }
 
 function renderGraves(){
@@ -542,8 +558,18 @@ function openDetails(){
  url.value=g.url||"";
  moneyLost.value=g.moneyLost||"";
  timeWasted.value=g.timeWasted||"";
+
+ const hasOptional=Boolean(g.born||g.died||g.url||g.moneyLost);
+ optionalFields.classList.toggle("open",hasOptional);
+ optionalToggle.textContent=hasOptional?T[lang].lessOptional:T[lang].moreOptional;
+
  detailDialog.close();
  detailsDialog.showModal();
+}
+
+function toggleOptional(){
+ const open=optionalFields.classList.toggle("open");
+ optionalToggle.textContent=open?T[lang].lessOptional:T[lang].moreOptional;
 }
 
 detailsForm.addEventListener("submit",e=>{
