@@ -610,7 +610,13 @@ buryForm.addEventListener("submit",async e=>{
    openDetail(g.id,true);
  }catch(err){
    console.error("Create grave failed",err);
-   showToast(lang==="zh"?"建立墓碑失敗，請再試一次":"Could not create grave. Please try again.");
+   const raw=String(err?.message||err||"unknown error");
+   let detail=raw;
+   try{
+     const parsed=JSON.parse(raw);
+     detail=parsed.message||parsed.details||parsed.hint||raw;
+   }catch(_){}
+   showToast((lang==="zh"?"建立失敗：":"Create failed: ")+detail.slice(0,180));
  }finally{
    submitBtn.disabled=false;
    submitBtn.textContent=oldText;
