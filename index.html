@@ -398,18 +398,54 @@ en:{
 }
 };
 
-const seed=[
- {id:1847,name:"Fluffy AI",description:"AI tool for cat owners",born:"2025",died:"2026",causeIndex:0,epitaph:"Nobody wanted it.",story:"",url:"",moneyLost:3420,timeWasted:"8 months",respects:328,createdAt:1},
- {id:1848,name:"MyGame.io",description:"An indie game side project",born:"2023",died:"2026",causeIndex:1,epitaph:"Halfway through, I got tired.",story:"",url:"",moneyLost:620,timeWasted:"3 years",respects:94,createdAt:2},
- {id:1849,name:"Dog Tinder",description:"Dating, but for dogs",born:"2026",died:"2026",causeIndex:8,epitaph:"The idea was worse than the name.",story:"",url:"",moneyLost:80,timeWasted:"6 hours",respects:1204,createdAt:3}
-];
+const SUPABASE_URL="https://xkeadligtknihpgqnyzg.supabase.co";
+const SUPABASE_KEY="sb_publishable_OOG0u3eh6Y2lpEl4gRyVhQ_ewXwiE1U";
+const DB_HEADERS={
+  "apikey":SUPABASE_KEY,
+  "Content-Type":"application/json"
+};
 
 let lang=localStorage.getItem("ig-lang")||"zh";
-let graves=JSON.parse(localStorage.getItem("ig-graves")||"null")||seed;
+let graves=[];
 let activeId=null;
 let justCreatedId=null;
+let isLoading=true;
 
-function save(){localStorage.setItem("ig-graves",JSON.stringify(graves))}
+function fromRow(r){
+ return {
+   id:Number(r.id),
+   name:r.name||"",
+   description:r.description||"",
+   born:r.born_year?String(r.born_year):"",
+   died:r.died_year?String(r.died_year):"",
+   causeIndex:Number(r.cause_index??10),
+   epitaph:r.epitaph||"",
+   story:r.story||"",
+   url:r.project_url||"",
+   moneyLost:Number(r.money_lost||0),
+   timeWasted:r.time_wasted||"",
+   respects:Number(r.respects||0),
+   createdAt:r.created_at||""
+ };
+}
+
+async function loadGraves(){
+ isLoading=true;
+ try{
+   const res=await fetch(SUPABASE_URL+"/rest/v1/graves?select=*&order=created_at.desc&limit=100",{headers:DB_HEADERS});
+   if(!res.ok) throw new Error(await res.text());
+   graves=(await res.json()).map(fromRow);
+ }catch(err){
+   console.error("Supabase load failed",err);
+   graves=[];
+   showToast(lang==="zh"?"資料庫連線失敗，請重新整理":"Database connection failed. Please refresh.");
+ }finally{
+   isLoading=false;
+   renderAll();
+   openGraveFromHash();
+ }
+}
+
 function causeText(g){return T[lang].causes[g.causeIndex]||T[lang].causes[10]}
 function money(v){return v?new Intl.NumberFormat(lang==="zh"?"zh-TW":"en-US",{style:"currency",currency:"USD",maximumFractionDigits:0}).format(v):"—"}
 function years(g){return [g.born,g.died].filter(Boolean).join(" — ")||"—"}
@@ -443,7 +479,11 @@ function renderI18n(){
 
 function renderGraves(){
  graveyard.innerHTML="";
- const list=[...graves].sort((a,b)=>b.createdAt-a.createdAt).slice(0,9);
+ if(isLoading){
+   graveyard.innerHTML='<div style="grid-column:1/-1;color:var(--muted);padding:30px 0">'+(lang==="zh"?"正在打開墓園…":"Opening the graveyard…")+'</div>';
+   return;
+ }
+ const list=[...graves].sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)).slice(0,9);
  if(!list.length){graveyard.innerHTML='<div style="grid-column:1/-1;color:var(--muted);padding:30px 0">'+T[lang].empty+'</div>';return}
  list.forEach(g=>{
    const el=document.createElement("article");el.className="grave";
@@ -538,15 +578,38 @@ function fillDetail(g){
  shareCopy.textContent=buildShareText(g);
 }
 
-buryForm.addEventListener("submit",e=>{
+buryForm.addEventListener("submit",async e=>{
  e.preventDefault();
- const nextId=Math.max(...graves.map(g=>g.id),1846)+1;
- const g={
-   id:nextId,name:projectName.value.trim(),description:"",born:"",died:"",
-   causeIndex:Number(cause.value),epitaph:epitaph.value.trim(),story:"",url:"",
-   moneyLost:0,timeWasted:"",respects:0,createdAt:Date.now()
- };
- graves.push(g);save();buryDialog.close();renderAll();openDetail(g.id,true);
+ const submitBtn=buryForm.querySelector(".submit");
+ const oldText=submitBtn.textContent;
+ submitBtn.disabled=true;
+ submitBtn.textContent=lang==="zh"?"正在下葬…":"Burying…";
+ try{
+   const payload={
+     name:projectName.value.trim(),
+     cause_index:Number(cause.value),
+     epitaph:epitaph.value.trim()||null
+   };
+   const res=await fetch(SUPABASE_URL+"/rest/v1/graves",{
+     method:"POST",
+     headers:{...DB_HEADERS,"Prefer":"return=representation"},
+     body:JSON.stringify(payload)
+   });
+   if(!res.ok) throw new Error(await res.text());
+   const rows=await res.json();
+   const g=fromRow(rows[0]);
+   graves.unshift(g);
+   buryDialog.close();
+   buryForm.reset();
+   renderAll();
+   openDetail(g.id,true);
+ }catch(err){
+   console.error("Create grave failed",err);
+   showToast(lang==="zh"?"建立墓碑失敗，請再試一次":"Could not create grave. Please try again.");
+ }finally{
+   submitBtn.disabled=false;
+   submitBtn.textContent=oldText;
+ }
 });
 
 function openDetails(){
@@ -574,22 +637,32 @@ function toggleOptional(){
 
 detailsForm.addEventListener("submit",e=>{
  e.preventDefault();
- const g=graves.find(x=>x.id===activeId);if(!g)return;
- g.description=description.value.trim();
- g.born=born.value.trim();
- g.died=died.value.trim();
- g.story=story.value.trim();
- g.url=url.value.trim();
- g.moneyLost=Number(moneyLost.value)||0;
- g.timeWasted=timeWasted.value.trim();
- save();detailsDialog.close();renderAll();openDetail(g.id,false);showToast(T[lang].saved);
+ showToast(lang==="zh"?"補充故事的雲端儲存下一步接上":"Cloud saving for extra details is the next step.");
 });
 
-function payRespect(){
+async function payRespect(){
  const g=graves.find(x=>x.id===activeId);if(!g)return;
  const key="ig-respected-"+g.id;
- if(localStorage.getItem(key)){showToast(lang==="zh"?"你已經致意過這座墓碑":"You already paid respects");return}
- g.respects++;localStorage.setItem(key,"1");save();renderAll();fillDetail(g);showToast(T[lang].respected);
+ if(localStorage.getItem(key)){
+   showToast(lang==="zh"?"你已經致意過這座墓碑":"You already paid respects");
+   return;
+ }
+ try{
+   const res=await fetch(SUPABASE_URL+"/rest/v1/rpc/increment_grave_respect",{
+     method:"POST",
+     headers:DB_HEADERS,
+     body:JSON.stringify({grave_id:g.id})
+   });
+   if(!res.ok) throw new Error(await res.text());
+   g.respects++;
+   localStorage.setItem(key,"1");
+   renderAll();
+   fillDetail(g);
+   showToast(T[lang].respected);
+ }catch(err){
+   console.error("Respect failed",err);
+   showToast(lang==="zh"?"致意失敗，請再試一次":"Could not pay respects. Please try again.");
+ }
 }
 
 function buildShareText(g){
@@ -624,7 +697,15 @@ function showToast(msg){
 function escapeHtml(v){
  return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
 }
+function openGraveFromHash(){
+ const m=location.hash.match(/^#grave-(\d+)$/);
+ if(!m)return;
+ const id=Number(m[1]);
+ if(graves.some(g=>g.id===id)) openDetail(id,false);
+}
+window.addEventListener("hashchange",openGraveFromHash);
 renderAll();
+loadGraves();
 </script>
 </body>
 </html>
