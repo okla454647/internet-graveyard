@@ -152,8 +152,8 @@ textarea{min-height:92px;resize:vertical}
 }
 .form-note{text-align:center;color:#7f8a81;font-size:12px;margin-top:10px}
 .content-warning{
-  margin-top:14px;padding:10px 12px;border:1px solid #4b4030;background:#17130d;
-  border-radius:11px;color:#cfc4b0;font-size:12px;line-height:1.55
+  margin-top:14px;padding:10px 12px;border:1px solid #6b5739;background:#1b160f;
+  border-radius:11px;color:#d8ccb8;font-size:12px;line-height:1.55
 }
 .content-warning b{color:#e6d8bc}
 .optional-toggle{
@@ -328,6 +328,11 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding-top:34px}
 
     <label data-i18n="epitaph">③ 留一句遺言</label>
     <textarea id="epitaph" maxlength="180" data-ph="epitaphPh"></textarea>
+
+    <div class="content-warning">
+      <b data-i18n="contentWarnTitle">⚠ 內容注意</b>
+      <div data-i18n="contentWarnText">請勿放入個資、侵權內容、冒充他人、仇恨或騷擾、露骨 18+ 內容、垃圾廣告、詐騙或惡意連結。</div>
+    </div>
 
     <button class="submit" type="submit" data-i18n="submit">🪦 埋了它</button>
     <div class="form-note" data-i18n="formNote">建立後會立刻得到一座墓碑。</div>
@@ -870,6 +875,22 @@ function fillDetail(g){
  shareCopy.textContent=buildShareText(g);
 }
 
+const BLOCKED_TERMS=[
+ "bitch","fuck","fucking","shit","nigger","nigga","cunt","slut",
+ "porn","xxx","rape","kill yourself","kys"
+];
+
+function findBlockedTerm(values){
+ const text=values.map(v=>String(v||"").toLowerCase()).join(" ");
+ return BLOCKED_TERMS.find(term=>text.includes(term))||"";
+}
+
+function contentBlockedMessage(term){
+ return lang==="zh"
+   ?"內容包含禁止詞彙「"+term+"」，請修改後再送出。"
+   :"Your content contains a blocked term: “"+term+"”. Please edit it before submitting.";
+}
+
 buryForm.addEventListener("submit",async e=>{
  e.preventDefault();
  const submitBtn=buryForm.querySelector(".submit");
@@ -877,6 +898,12 @@ buryForm.addEventListener("submit",async e=>{
  submitBtn.disabled=true;
  submitBtn.textContent=lang==="zh"?"正在下葬…":"Burying…";
  try{
+   const blocked=findBlockedTerm([
+     projectName.value,
+     epitaph.value
+   ]);
+   if(blocked) throw new Error(contentBlockedMessage(blocked));
+
    const ownerToken=makeOwnerToken();
    const payload={
      name:projectName.value.trim(),
@@ -954,6 +981,14 @@ detailsForm.addEventListener("submit",async e=>{
  submitBtn.textContent=lang==="zh"?"儲存中…":"Saving…";
 
  try{
+   const blocked=findBlockedTerm([
+     description.value,
+     story.value,
+     timeWasted.value,
+     url.value
+   ]);
+   if(blocked) throw new Error(contentBlockedMessage(blocked));
+
    const payload={
      description:description.value.trim()||null,
      story:story.value.trim()||null,
