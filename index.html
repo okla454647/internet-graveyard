@@ -729,32 +729,32 @@ async function runDiagnostics(){
  diagDialog.showModal();
  diagResults.innerHTML='<div class="detail-item"><span>狀態</span><b>測試中…</b></div>';
 
- add("瀏覽器網路",navigator.onLine?"OK":"FAIL",navigator.onLine?"navigator.onLine = true":"navigator.onLine = false");
+ add("瀏覽器網路",navigator.onLine?"OK":"FAIL",
+     navigator.onLine?"navigator.onLine = true":"navigator.onLine = false");
 
  try{
-   const r=await fetch(SUPABASE_URL,{method:"GET",mode:"cors",cache:"no-store"});
-   add("Supabase 主機","OK","HTTP "+r.status);
+   const r=await fetch(SUPABASE_URL+"/rest/v1/graves?select=id&limit=1",{
+     method:"GET",
+     headers:{
+       "apikey":SUPABASE_KEY,
+       "Authorization":"Bearer "+SUPABASE_KEY
+     }
+   });
+   if(!r.ok){
+     add("REST API","FAIL","HTTP "+r.status+" · "+(await r.text()).slice(0,160));
+   }else{
+     add("REST API","OK","HTTP "+r.status);
+   }
  }catch(e){
-   add("Supabase 主機","FAIL",String(e?.message||e));
+   add("REST API","FAIL",String(e?.message||e));
  }
 
  try{
    const {error}=await supabaseClient.from("graves").select("id").limit(1);
    if(error) throw error;
-   add("graves 讀取","OK","可讀取資料表");
+   add("graves 讀取","OK","Supabase Client 可正常讀取資料表");
  }catch(e){
    add("graves 讀取","FAIL",String(e?.message||e));
- }
-
- try{
-   const r=await fetch(SUPABASE_URL+"/rest/v1/graves?select=id&limit=1",{
-     method:"GET",
-     headers:{"apikey":SUPABASE_KEY,"Authorization":"Bearer "+SUPABASE_KEY}
-   });
-   if(!r.ok) add("REST API","FAIL","HTTP "+r.status+" · "+(await r.text()).slice(0,160));
-   else add("REST API","OK","HTTP "+r.status);
- }catch(e){
-   add("REST API","FAIL",String(e?.message||e));
  }
 
  diagResults.innerHTML=rows.map(x=>{
