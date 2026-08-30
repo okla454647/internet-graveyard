@@ -865,7 +865,10 @@ buryForm.addEventListener("submit",async e=>{
    if(error) throw error;
    const g=fromRow(data);
    localStorage.setItem(ownerKey(g.id),ownerToken);
-   graves.unshift(g);
+
+   graveTotal+=1;
+   graves=[g,...graves].slice(0,GRAVE_PAGE_SIZE);
+
    buryDialog.close();
    buryForm.reset();
    renderAll();
