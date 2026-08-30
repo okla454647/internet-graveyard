@@ -57,7 +57,7 @@ h2{margin:0;font-size:28px}.small{color:var(--muted);font-size:14px;margin-top:5
 }
 .filter-btn.active{background:var(--accent);color:#111;border-color:var(--accent)}
 .result-count{color:var(--muted);font-size:12px;margin:-6px 0 12px}
-.load-more-wrap{text-align:center;margin-top:18px}
+.load-more-wrap{display:flex;justify-content:center;gap:10px;margin-top:18px;flex-wrap:wrap}
 .load-more{
   display:none;border:1px solid var(--line);background:#141b16;color:var(--text);
   padding:12px 18px;border-radius:11px;font-weight:750
@@ -269,6 +269,7 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding-top:34px}
   <div class="result-count" id="graveResultCount"></div>
   <div class="graveyard" id="graveyard"></div>
   <div class="load-more-wrap">
+    <button class="load-more" id="collapseGravesBtn" onclick="collapseGraves()">收起墓碑</button>
     <button class="load-more" id="loadMoreBtn" onclick="loadMoreGraves()">載入更多墓碑</button>
   </div>
 </section>
@@ -519,6 +520,15 @@ function setGraveSort(v){
  graveSortMode=v;
  loadGraves(true);
 }
+function collapseGraves(){
+ if(graves.length<=GRAVE_PAGE_SIZE)return;
+ graves=graves.slice(0,GRAVE_PAGE_SIZE);
+ renderGraves();
+ window.requestAnimationFrame(()=>{
+   const tools=document.querySelector(".grave-tools");
+   if(tools) tools.scrollIntoView({behavior:"smooth",block:"start"});
+ });
+}
 function sufferingScore(g){
  const b=Number(g.born)||0,d=Number(g.died)||0;
  return b&&d?Math.max(0,d-b):0;
@@ -682,6 +692,9 @@ function renderI18n(){
    if(typeof loadMoreBtn!=="undefined" && !isLoadingMore){
      loadMoreBtn.textContent=lang==="zh"?"載入更多墓碑":"Load more graves";
    }
+   if(typeof collapseGravesBtn!=="undefined"){
+     collapseGravesBtn.textContent=lang==="zh"?"收起墓碑":"Collapse graves";
+   }
  }
  if(typeof optionalFields!=="undefined" && typeof optionalToggle!=="undefined"){
    optionalToggle.textContent=optionalFields.classList.contains("open")?T[lang].lessOptional:T[lang].moreOptional;
@@ -714,6 +727,9 @@ function renderGraves(){
    loadMoreBtn.textContent=isLoadingMore
      ?(lang==="zh"?"載入中…":"Loading…")
      :(lang==="zh"?"載入更多墓碑":"Load more graves");
+ }
+ if(typeof collapseGravesBtn!=="undefined"){
+   collapseGravesBtn.style.display=list.length>GRAVE_PAGE_SIZE?"inline-block":"none";
  }
 
  if(!list.length){
