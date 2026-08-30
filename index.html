@@ -56,6 +56,12 @@ h2{margin:0;font-size:28px}.small{color:var(--muted);font-size:14px;margin-top:5
 .stone{font-size:44px}.grave h3{margin:7px 0 4px;font-size:21px}
 .meta{color:var(--muted);font-size:13px}
 .epitaph{font-size:15px;line-height:1.6;min-height:46px}
+.card-facts{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0 34px}
+.card-fact{
+  display:inline-flex;align-items:center;gap:5px;
+  border:1px solid rgba(255,255,255,.07);background:#0d130f;
+  border-radius:999px;padding:6px 9px;color:#c8d0c7;font-size:12px
+}
 .tag{
   display:inline-block;border:1px solid var(--line);border-radius:999px;
   padding:6px 9px;color:var(--muted);font-size:12px
@@ -490,12 +496,20 @@ function renderGraves(){
  if(!list.length){graveyard.innerHTML='<div style="grid-column:1/-1;color:var(--muted);padding:30px 0">'+T[lang].empty+'</div>';return}
  list.forEach(g=>{
    const el=document.createElement("article");el.className="grave";
+   const facts=[];
+   if(g.timeWasted){
+     facts.push('<span class="card-fact">⏱ '+escapeHtml(g.timeWasted)+'</span>');
+   }
+   if(Number(g.moneyLost)>0){
+     facts.push('<span class="card-fact">💸 '+escapeHtml(money(g.moneyLost))+'</span>');
+   }
    el.innerHTML=
     '<div class="stone">🪦</div>'+
     '<h3>'+escapeHtml(g.name)+'</h3>'+
     '<div class="meta">'+escapeHtml(years(g))+'</div>'+
     '<p class="epitaph">“'+escapeHtml(g.epitaph||g.description||"R.I.P.")+'”</p>'+
     '<span class="tag">'+escapeHtml(causeText(g))+'</span>'+
+    (facts.length?'<div class="card-facts">'+facts.slice(0,2).join("")+'</div>':'<div style="height:34px"></div>')+
     '<div class="respect-count">🌹 '+g.respects+'</div>'+
     '<button class="cover" aria-label="View grave"></button>';
    el.querySelector(".cover").onclick=()=>openDetail(g.id,false);
