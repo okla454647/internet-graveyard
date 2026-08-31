@@ -378,7 +378,12 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding-top:34px}
 </section>
 
 <section>
-  <div class="section-head"><div><h2 data-i18n="kills">什麼最常殺死網路專案？</h2></div></div>
+  <div class="section-head">
+    <div>
+      <h2 id="distributionTitle" data-i18n="kills">什麼最常殺死網路專案？</h2>
+      <div class="small" id="distributionSub" style="display:none"></div>
+    </div>
+  </div>
   <div class="causes" id="causes"></div>
 </section>
 
@@ -1066,6 +1071,12 @@ function applyGardenUI(){
  filterStory.textContent=memorial?(lang==="zh"?"有故事":"Has story"):(lang==="zh"?"有故事":"Has story");
  const projectOnly=document.querySelectorAll(".project-only-section");
  projectOnly.forEach(x=>x.style.display=memorial?"none":"");
+ const siteFooter=document.querySelector("footer");
+ if(siteFooter){
+   siteFooter.textContent=memorial
+     ?(lang==="zh"?"Internet Graveyard · 有些事結束了，但不必消失。":"Internet Graveyard · Some things end, but don't have to disappear.")
+     :T[lang].footer;
+ }
  if(typeof graveSort!=="undefined"){
    graveSort.options[2].hidden=memorial;graveSort.options[3].hidden=memorial;
    if(memorial && (graveSort.value==="loss"||graveSort.value==="suffering")){graveSort.value="latest";graveSortMode="latest"}
@@ -1111,7 +1122,9 @@ function renderI18n(){
      loadMoreBtn.textContent=lang==="zh"?"載入更多墓碑":"Load more graves";
    }
    if(typeof collapseGravesBtn!=="undefined"){
-     collapseGravesBtn.textContent=lang==="zh"?"收起墓碑":"Collapse graves";
+     collapseGravesBtn.textContent=gardenMode==="memorial"
+       ?(lang==="zh"?"收起紀念":"Collapse memorials")
+       :(lang==="zh"?"收起墓碑":"Collapse graves");
    }
  }
  if(typeof projectGardenBtn!=="undefined"){
@@ -1156,9 +1169,9 @@ function renderGraves(){
  const list=[...graves];
 
  if(typeof graveResultCount!=="undefined"){
-   graveResultCount.textContent=lang==="zh"
-     ?"顯示 "+list.length+" / "+graveTotal+" 座墓碑"
-     :"Showing "+list.length+" of "+graveTotal+" graves";
+   graveResultCount.textContent=gardenMode==="memorial"
+     ?(lang==="zh"?"顯示 "+list.length+" / "+graveTotal+" 個紀念":"Showing "+list.length+" of "+graveTotal+" memorials")
+     :(lang==="zh"?"顯示 "+list.length+" / "+graveTotal+" 座墓碑":"Showing "+list.length+" of "+graveTotal+" graves");
  }
  if(typeof filterAll!=="undefined"){
    filterAll.classList.toggle("active",graveFilter==="all");
@@ -1172,7 +1185,9 @@ function renderGraves(){
    loadMoreBtn.disabled=isLoadingMore;
    loadMoreBtn.textContent=isLoadingMore
      ?(lang==="zh"?"載入中…":"Loading…")
-     :(lang==="zh"?"載入更多墓碑":"Load more graves");
+     :(gardenMode==="memorial"
+       ?(lang==="zh"?"載入更多紀念":"Load more memorials")
+       :(lang==="zh"?"載入更多墓碑":"Load more graves"));
  }
  if(typeof collapseGravesBtn!=="undefined"){
    collapseGravesBtn.style.display=list.length>GRAVE_PAGE_SIZE?"inline-block":"none";
@@ -1237,8 +1252,36 @@ function renderHall(){
 }
 
 function renderCauses(){
- const counts=T[lang].causes.map((_,i)=>graves.filter(g=>g.causeIndex===i).length);
  const total=Math.max(1,graves.length);
+
+ if(gardenMode==="memorial"){
+   const cats=["pet","person","place","memory","life_chapter","other"];
+   const ranked=cats
+     .map(v=>({v,n:graves.filter(g=>g.memorialCategory===v).length}))
+     .sort((a,b)=>b.n-a.n)
+     .filter(x=>x.n>0);
+
+   distributionTitle.textContent=lang==="zh"?"花園裡留下了什麼？":"What is remembered here?";
+   distributionSub.textContent=lang==="zh"
+     ?"只看看大家留下了哪些類型的紀念，不做排名。"
+     :"A gentle look at the kinds of memories left here — no rankings.";
+   distributionSub.style.display="block";
+
+   if(!ranked.length){
+     causes.innerHTML='<div style="color:var(--muted)">'+(lang==="zh"?"還沒有紀念資料。":"No memorials yet.")+'</div>';
+     return;
+   }
+
+   causes.innerHTML=ranked.map(x=>{
+     const pct=Math.round(x.n/total*100);
+     return '<div class="cause"><div><span>'+escapeHtml(memorialCategoryText(x.v))+'</span><div class="bar"><i style="width:'+pct+'%"></i></div></div><b>'+pct+'%</b></div>';
+   }).join("");
+   return;
+ }
+
+ distributionTitle.textContent=T[lang].kills;
+ distributionSub.style.display="none";
+ const counts=T[lang].causes.map((_,i)=>graves.filter(g=>g.causeIndex===i).length);
  const ranked=counts.map((n,i)=>({n,i})).sort((a,b)=>b.n-a.n).slice(0,4);
  causes.innerHTML=ranked.map(x=>{
    const pct=Math.round(x.n/total*100);
