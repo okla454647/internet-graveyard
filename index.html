@@ -218,9 +218,31 @@ textarea{min-height:92px;resize:vertical}
   background:#122016;border-radius:999px;padding:7px 11px;color:#c9f0d1;font-size:12px
 }
 .resurrect-action{display:none;width:100%;margin-top:10px;border-color:#355c3f;background:#132018;color:#d7f0dc}
+.completion-moment{
+  display:none;max-width:520px;margin:0 auto 24px;padding:18px;
+  border:1px solid var(--line);border-radius:16px;background:#101611;text-align:center
+}
 .completion-copy{
-  display:none;margin:0 auto 18px;max-width:440px;color:var(--muted);
-  font-size:14px;line-height:1.65
+  display:none;margin:9px auto 14px;max-width:430px;color:var(--muted);
+  font-size:13px;line-height:1.65
+}
+.completion-actions{
+  display:none;grid-template-columns:1fr 1fr;gap:9px;max-width:430px;margin:0 auto
+}
+.completion-actions button{
+  width:100%;min-height:42px;border-radius:11px;padding:10px 12px;font-weight:800
+}
+.completion-share{border:0;background:var(--accent);color:#111}
+.completion-view{border:1px solid var(--line);background:#182019;color:var(--text)}
+.completion-upgrade{display:none!important}
+body.memorial-mode .grave{min-height:0}
+body.memorial-mode .memorial-card-image{
+  width:100%;height:148px;aspect-ratio:auto;object-fit:cover
+}
+@media(max-width:620px){
+  .completion-moment{padding:15px 12px;margin-bottom:18px}
+  .completion-actions{grid-template-columns:1fr}
+  body.memorial-mode .memorial-card-image{height:132px}
 }
 .detail-grave h2{font-size:36px;margin:4px 0 3px}
 .grave-id-hero{color:#879187;font-size:12px;letter-spacing:.12em;margin-bottom:10px}
@@ -1383,7 +1405,7 @@ function fillDetail(g){
  buriedBadge.style.display=isNew && !g.resurrected?"block":"none";
  completionCopy.style.display=isNew?"block":"none";
  completionActions.style.display=isNew?"grid":"none";
- completionUpgradeBtn.style.display=isNew?"block":"none";
+ completionUpgradeBtn.style.display="none";
 
  if(isNew){
    buriedBadge.textContent=isMemorial
