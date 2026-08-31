@@ -67,8 +67,24 @@ body.memorial-mode .stone{filter:saturate(.55)}
 .image-help{font-size:12px;color:var(--muted);margin-top:7px;line-height:1.45}
 .image-preview{display:none;margin-top:10px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#0b100c}
 .image-preview img{display:block;width:100%;max-height:320px;object-fit:contain}
-.memorial-card-image{width:100%;height:160px;object-fit:cover;border-radius:12px;margin:0 0 12px;border:1px solid var(--line);display:block}
-.memorial-detail-image{display:none;width:100%;max-height:540px;object-fit:contain;margin:0 auto 18px;border-radius:16px;border:1px solid var(--line);background:#0b100c}
+.memorial-card-image{
+  width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:12px;margin:0 0 12px;
+  border:1px solid var(--line);display:block;background:#0b100c
+}
+.memorial-detail-image{
+  display:none;width:100%;max-height:540px;object-fit:contain;margin:0 auto 18px;
+  border-radius:16px;border:1px solid var(--line);background:#0b100c;cursor:zoom-in
+}
+.memorial-detail-image.is-loading{opacity:.35}
+.image-viewer{width:min(96vw,1100px);padding:0;border:1px solid var(--line);border-radius:18px;background:#080c09}
+.image-viewer::backdrop{background:rgba(0,0,0,.86)}
+.image-viewer-inner{position:relative;padding:18px}
+.image-viewer img{display:block;max-width:100%;max-height:88vh;margin:auto;object-fit:contain;border-radius:12px}
+.image-viewer-close{
+  position:absolute;right:26px;top:24px;width:40px;height:40px;border-radius:999px;
+  border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.55);color:white;
+  font-size:24px;line-height:1;z-index:2
+}
 section{padding:38px 0}
 .section-head{display:flex;align-items:end;justify-content:space-between;margin-bottom:18px}
 h2{margin:0;font-size:28px}.small{color:var(--muted);font-size:14px;margin-top:5px}
@@ -490,7 +506,7 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding-top:34px}
     <div class="buried-badge" id="buriedBadge" data-i18n="buriedBadge">✓ 它已經安息了</div>
     <div class="resurrected-badge" id="resurrectedBadge"></div>
     <div class="completion-copy" id="completionCopy" data-i18n="completionCopy">你的專案現在有一個永久墓碑編號。分享它，或把完整故事留給後來的人。</div>
-    <img class="memorial-detail-image" id="memorialDetailImage" alt="">
+    <img class="memorial-detail-image" id="memorialDetailImage" alt="" onclick="openImageViewer(this.src)" onload="this.classList.remove('is-loading')" onerror="this.style.display='none'">
     <div class="detail-stone">🪦</div>
     <div class="grave-id-hero" id="graveNumber"></div>
     <h2 id="detailName"></h2>
@@ -606,6 +622,13 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding-top:34px}
     <button class="submit" type="submit" data-i18n="saveDetails">儲存補充資料</button>
   </form>
 </div>
+</dialog>
+
+<dialog class="image-viewer" id="imageViewer">
+  <div class="image-viewer-inner">
+    <button class="image-viewer-close" type="button" onclick="closeImageViewer()" aria-label="Close">×</button>
+    <img id="imageViewerImg" alt="">
+  </div>
 </dialog>
 
 <div class="toast" id="toast"></div>
@@ -1163,7 +1186,11 @@ function renderI18n(){
 function renderGraves(){
  graveyard.innerHTML="";
  if(isLoading){
-   graveyard.innerHTML='<div style="grid-column:1/-1;color:var(--muted);padding:30px 0">'+(lang==="zh"?"正在打開墓園…":"Opening the graveyard…")+'</div>';
+   graveyard.innerHTML='<div style="grid-column:1/-1;color:var(--muted);padding:30px 0">'+
+     (gardenMode==="memorial"
+       ?(lang==="zh"?"正在打開紀念花園…":"Opening the memorial garden…")
+       :(lang==="zh"?"正在打開墓園…":"Opening the graveyard…"))+
+     '</div>';
    return;
  }
  const list=[...graves];
@@ -1194,7 +1221,11 @@ function renderGraves(){
  }
 
  if(!list.length){
-   graveyard.innerHTML='<div style="grid-column:1/-1;color:var(--muted);padding:30px 0">'+(lang==="zh"?"沒有符合條件的墓碑。":"No graves match these filters.")+'</div>';
+   graveyard.innerHTML='<div style="grid-column:1/-1;color:var(--muted);padding:30px 0">'+
+     (gardenMode==="memorial"
+       ?(lang==="zh"?"沒有符合條件的紀念。":"No memorials match these filters.")
+       :(lang==="zh"?"沒有符合條件的墓碑。":"No graves match these filters."))+
+     '</div>';
    return;
  }
  list.forEach(g=>{
@@ -1211,7 +1242,9 @@ function renderGraves(){
      facts.push('<div class="card-fact"><span class="card-fact-label">'+(lang==="zh"?"損失":"Loss")+'</span><span class="card-fact-value">'+escapeHtml(money(g.moneyLost))+'</span></div>');
    }
    el.innerHTML=
-    (g.graveType==="memorial"&&g.memorialImageUrl?'<img class="memorial-card-image" src="'+escapeHtml(g.memorialImageUrl)+'" alt="" loading="lazy">':'')+
+    (g.graveType==="memorial"&&g.memorialImageUrl
+      ?'<img class="memorial-card-image" src="'+escapeHtml(g.memorialImageUrl)+'" alt="'+escapeHtml((lang==="zh"?"紀念照片":"Memorial photo"))+'" loading="lazy" onerror="this.style.display=\'none\'">'
+      :'')+
     (g.resurrected?'<div class="card-status" data-tooltip="'+escapeHtml(lang==="zh"?"復活後 12 小時內會保留淡綠色外框與光暈":"A soft green border and glow remain for 12 hours after resurrection")+'">'+(lang==="zh"?"🌱 已復活":"🌱 Resurrected")+'</div>':'')+
     '<div class="stone">'+(g.graveType==="memorial"?"🕯️":"🪦")+'</div>'+
     '<h3>'+escapeHtml(g.name)+'</h3>'+
@@ -1320,6 +1353,7 @@ function fillDetail(g){
  const isMemorial=g.graveType==="memorial";
  document.querySelector(".detail-stone").textContent=isMemorial?"🕯️":"🪦";
  if(isMemorial && g.memorialImageUrl){
+   memorialDetailImage.classList.add("is-loading");
    memorialDetailImage.src=g.memorialImageUrl;
    memorialDetailImage.style.display="block";
  }else{
@@ -1402,6 +1436,19 @@ function contentBlockedMessage(term){
    :"Your content contains a blocked term: “"+term+"”. Please edit it before submitting.";
 }
 
+function openImageViewer(src){
+ if(!src)return;
+ imageViewerImg.src=src;
+ imageViewer.showModal();
+}
+function closeImageViewer(){
+ imageViewer.close();
+ imageViewerImg.removeAttribute("src");
+}
+imageViewer.addEventListener("click",e=>{
+ if(e.target===imageViewer) closeImageViewer();
+});
+
 function previewMemorialImage(input,previewId){
  const box=document.getElementById(previewId);
  if(!box)return;
@@ -1416,6 +1463,10 @@ function previewMemorialImage(input,previewId){
  }
  const url=URL.createObjectURL(file);
  img.onload=()=>URL.revokeObjectURL(url);
+ img.onerror=()=>{
+   box.style.display="none";
+   showToast(lang==="zh"?"圖片預覽失敗，請換一張圖片":"Could not preview this image. Please choose another.");
+ };
  img.src=url;
  box.style.display="block";
 }
