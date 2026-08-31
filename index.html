@@ -506,6 +506,14 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding-top:34px}
     <div class="buried-badge" id="buriedBadge" data-i18n="buriedBadge">✓ 它已經安息了</div>
     <div class="resurrected-badge" id="resurrectedBadge"></div>
     <div class="completion-copy" id="completionCopy" data-i18n="completionCopy">你的專案現在有一個永久墓碑編號。分享它，或把完整故事留給後來的人。</div>
+    <div class="completion-actions" id="completionActions">
+      <button class="completion-share" id="completionShareBtn" type="button" onclick="shareNewGrave()">🔗 分享</button>
+      <button class="completion-view" id="completionViewBtn" type="button" onclick="finishCompletion()">查看墓碑</button>
+    </div>
+    <button class="completion-upgrade" id="completionUpgradeBtn" type="button" onclick="previewUpgrade()">
+      <b id="completionUpgradeTitle">✨ 讓這座墓碑更特別</b>
+      <span id="completionUpgradeSub">升級外觀與更多紀念功能（即將推出）</span>
+    </button>
     <img class="memorial-detail-image" id="memorialDetailImage" alt="" onclick="openImageViewer(this.src)" onload="this.classList.remove('is-loading')" onerror="this.style.display='none'">
     <div class="detail-stone">🪦</div>
     <div class="grave-id-hero" id="graveNumber"></div>
@@ -1330,6 +1338,34 @@ function renderAll(){
  }
 }
 
+async function shareNewGrave(){
+ const g=graves.find(x=>x.id===activeId);if(!g)return;
+ const url=graveShareUrl(g),shareText=buildShareText(g);
+ if(navigator.share){
+   try{
+     await navigator.share({title:g.name+" · Internet Graveyard",text:shareText,url});
+     return;
+   }catch(e){if(e?.name!=="AbortError")console.warn(e)}
+ }
+ try{
+   await navigator.clipboard.writeText(shareText+" "+url);
+   showToast(lang==="zh"?"分享內容已複製":"Share text copied");
+ }catch(e){
+   toggleShare();
+ }
+}
+function finishCompletion(){
+ justCreatedId=null;
+ const g=graves.find(x=>x.id===activeId);
+ if(g)fillDetail(g);
+}
+function previewUpgrade(){
+ const g=graves.find(x=>x.id===activeId);if(!g)return;
+ showToast(g.graveType==="memorial"
+   ?(lang==="zh"?"✨ 紀念碑升級功能即將推出":"✨ Memorial upgrades are coming soon")
+   :(lang==="zh"?"✨ 墓碑升級功能即將推出":"✨ Grave upgrades are coming soon"));
+}
+
 function openDetail(id,isNew){
  activeId=id;
  justCreatedId=isNew?id:null;
@@ -1340,8 +1376,36 @@ function openDetail(id,isNew){
 
 function fillDetail(g){
  const isNew=justCreatedId===g.id;
+ const isMemorial=g.graveType==="memorial";
  buriedBadge.style.display=isNew && !g.resurrected?"block":"none";
  completionCopy.style.display=isNew?"block":"none";
+ completionActions.style.display=isNew?"grid":"none";
+ completionUpgradeBtn.style.display=isNew?"block":"none";
+
+ if(isNew){
+   buriedBadge.textContent=isMemorial
+     ?(lang==="zh"?"✓ 紀念已建立":"✓ Memorial created")
+     :(lang==="zh"?"✓ 已正式下葬":"✓ Officially buried");
+   completionCopy.textContent=isMemorial
+     ?(lang==="zh"
+       ?"這段紀念現在有了自己的編號。把它分享給也記得的人，讓這份回憶被留下來。"
+       :"This memory now has its own number. Share it with someone who remembers.")
+     :(lang==="zh"
+       ?"你的失敗現在有了一個正式墓碑編號。分享出去，讓這次失敗至少留下一點傳說。"
+       :"Your failure now has an official grave number. Share it and leave a little legend behind.");
+   completionShareBtn.textContent=isMemorial
+     ?(lang==="zh"?"🔗 分享這段紀念":"🔗 Share this memorial")
+     :(lang==="zh"?"🔗 分享我的失敗":"🔗 Share my failure");
+   completionViewBtn.textContent=isMemorial
+     ?(lang==="zh"?"查看紀念碑":"View memorial")
+     :(lang==="zh"?"查看墓碑":"View grave");
+   completionUpgradeTitle.textContent=isMemorial
+     ?(lang==="zh"?"✨ 讓這座紀念碑更特別":"✨ Make this memorial more special")
+     :(lang==="zh"?"✨ 讓這座墓碑更有存在感":"✨ Make this grave stand out");
+   completionUpgradeSub.textContent=isMemorial
+     ?(lang==="zh"?"更多照片、特別外觀與紀念功能（即將推出）":"More photos, special styles and memorial features (coming soon)")
+     :(lang==="zh"?"特殊碑型、銘牌與更多展示方式（即將推出）":"Special grave styles, plaques and more display options (coming soon)");
+ }
 
  if(g.resurrected){
    const when=g.resurrectedAt?new Date(g.resurrectedAt).toLocaleDateString(lang==="zh"?"zh-TW":"en-US"):"";
@@ -1350,7 +1414,6 @@ function fillDetail(g){
  }else{
    resurrectedBadge.style.display="none";
  }
- const isMemorial=g.graveType==="memorial";
  document.querySelector(".detail-stone").textContent=isMemorial?"🕯️":"🪦";
  if(isMemorial && g.memorialImageUrl){
    memorialDetailImage.classList.add("is-loading");
@@ -1794,17 +1857,17 @@ function buildShareText(g){
  const respects=Number(g.respects||0);
  if(g.graveType==="memorial"){
    return lang==="zh"
-     ? "🕯️ 為 "+g.name+" 留下一段紀念。"+last+"｜🌹 "+respects+" 朵花｜MEMORIAL #"+g.id
-     : "🕯️ A memorial for "+g.name+"."+last+" | 🌹 "+respects+" flowers | MEMORIAL #"+g.id;
+     ? "🕯️ 為 "+g.name+" 留下一段紀念。"+last+"｜🌹 "+respects+" 朵花｜紀念 #"+(g.typeNumber||g.id)
+     : "🕯️ A memorial for "+g.name+"."+last+" | 🌹 "+respects+" flowers | MEMORIAL #"+(g.typeNumber||g.id);
  }
  if(g.resurrected){
    return lang==="zh"
-     ? "🌱 "+g.name+" 從 Internet Graveyard 復活了。"+last+"｜原死因："+cause+"｜🌹 "+respects+" 次致意｜GRAVE #"+g.id
-     : "🌱 "+g.name+" has been resurrected from the Internet Graveyard."+last+" | Cause: "+cause+" | 🌹 "+respects+" respects | GRAVE #"+g.id;
+     ? "🌱 "+g.name+" 從 Internet Graveyard 復活了。"+last+"｜原死因："+cause+"｜🌹 "+respects+" 次致意｜墓碑 #"+(g.typeNumber||g.id)
+     : "🌱 "+g.name+" has been resurrected from the Internet Graveyard."+last+" | Cause: "+cause+" | 🌹 "+respects+" respects | GRAVE #"+(g.typeNumber||g.id);
  }
  return lang==="zh"
-   ? "🪦 "+g.name+" 正式宣告死亡。"+last+"｜死因："+cause+"｜🌹 "+respects+" 次致意｜GRAVE #"+g.id
-   : "🪦 "+g.name+" is officially dead."+last+" | Cause: "+cause+" | 🌹 "+respects+" respects | GRAVE #"+g.id;
+   ? "🪦 "+g.name+" 正式宣告死亡。"+last+"｜死因："+cause+"｜🌹 "+respects+" 次致意｜墓碑 #"+(g.typeNumber||g.id)
+   : "🪦 "+g.name+" is officially dead."+last+" | Cause: "+cause+" | 🌹 "+respects+" respects | GRAVE #"+(g.typeNumber||g.id);
 }
 
 async function toggleShare(){
