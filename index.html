@@ -1329,6 +1329,7 @@ function fillDetail(g){
    detailPublicNote.style.display=ownsGrave?"none":"block";
  }
  visitorActionsLabel.textContent=isMemorial?(lang==="zh"?"獻花與分享":"Flowers & share"):T[lang].visitorActions;
+ ownerActionsLabel.textContent=isMemorial?(lang==="zh"?"紀念碑管理":"Memorial management"):T[lang].ownerActions;
  if(typeof ownerActionsLabel!=="undefined") ownerActionsLabel.style.display=ownsGrave?"block":"none";
  if(typeof editDetailsBtn!=="undefined"){
    editDetailsBtn.style.display=ownsGrave?"block":"none";
