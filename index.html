@@ -1283,7 +1283,9 @@ function fillDetail(g){
    memorialDetailImage.removeAttribute("src");
    memorialDetailImage.style.display="none";
  }
- graveNumber.textContent=(isMemorial?"MEMORIAL #":"GRAVE #")+g.id;
+ graveNumber.textContent=isMemorial
+   ?((lang==="zh"?"紀念 #":"MEMORIAL #")+g.id)
+   :((lang==="zh"?"墓碑 #":"GRAVE #")+g.id);
  detailName.textContent=g.name;
  detailYears.textContent=years(g);
  detailYears.style.display=(g.born||g.died)?"block":"none";
