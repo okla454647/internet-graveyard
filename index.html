@@ -57,6 +57,20 @@ header{
 body.memorial-mode{background:radial-gradient(circle at top,#1a1a17 0,#0d100d 46%)}
 body.memorial-mode .cta{background:#eee9dc}
 body.memorial-mode .grave{background:#151814;border-color:#383a32}
+body.memorial-mode .grave{
+  height:360px;min-height:360px;overflow:hidden;padding:20px
+}
+body.memorial-mode .memorial-card-image{
+  height:112px;margin-bottom:10px;border-radius:10px
+}
+body.memorial-mode .stone{font-size:36px}
+body.memorial-mode .grave h3{font-size:19px;margin:5px 0 3px}
+body.memorial-mode .epitaph{min-height:40px;margin:10px 0 4px}
+body.memorial-mode .card-facts{margin:8px 0 30px}
+@media(max-width:760px){
+  body.memorial-mode .grave{height:340px;min-height:340px}
+  body.memorial-mode .memorial-card-image{height:96px}
+}
 body.memorial-mode .stone{filter:saturate(.55)}
 .type-choice{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0 20px}
 .type-choice button{border:1px solid var(--line);background:#0d120e;color:var(--text);border-radius:13px;padding:14px;text-align:left}
@@ -235,15 +249,11 @@ textarea{min-height:92px;resize:vertical}
 .completion-share{border:0;background:var(--accent);color:#111}
 .completion-view{border:1px solid var(--line);background:#182019;color:var(--text)}
 .completion-upgrade{display:none!important}
-body.memorial-mode .grave{min-height:0}
-body.memorial-mode .memorial-card-image{
-  width:100%;height:148px;aspect-ratio:auto;object-fit:cover
-}
+body.memorial-mode .memorial-card-image{width:100%;aspect-ratio:auto;object-fit:cover}
 @media(max-width:620px){
   .completion-moment{padding:15px 12px;margin-bottom:18px}
   .completion-actions{grid-template-columns:1fr}
-  body.memorial-mode .memorial-card-image{height:132px}
-}
+ }
 .detail-grave h2{font-size:36px;margin:4px 0 3px}
 .grave-id-hero{color:#879187;font-size:12px;letter-spacing:.12em;margin-bottom:10px}
 .detail-meta{color:var(--muted);margin:4px 0 14px}
