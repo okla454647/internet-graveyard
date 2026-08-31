@@ -432,6 +432,22 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding-top:34px}
       <select id="cause" required></select>
     </div>
 
+    <div id="memorialCreateFields" style="display:none">
+      <label id="memorialCategoryLabel">② 紀念類型 *</label>
+      <select id="memorialCategory">
+        <option value="pet">🐾 寵物</option>
+        <option value="person">♡ 人</option>
+        <option value="place">📍 地方</option>
+        <option value="memory">💭 回憶</option>
+        <option value="life_chapter">🌿 人生階段</option>
+        <option value="other">🕯️ 其他</option>
+      </select>
+      <div class="row">
+        <div><label id="memorialStartLabel">開始／相遇年份</label><input id="memorialStartYear" type="number" min="1900" max="2100" placeholder="2012"></div>
+        <div><label id="memorialEndLabel">告別／結束年份</label><input id="memorialEndYear" type="number" min="1900" max="2100" placeholder="2026"></div>
+      </div>
+    </div>
+
     <label id="epitaphLabel" data-i18n="epitaph">③ 留一句遺言</label>
     <textarea id="epitaph" maxlength="180" data-ph="epitaphPh"></textarea>
 
@@ -463,7 +479,7 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding-top:34px}
     <div class="detail-epitaph" id="detailEpitaph"></div>
 
     <div class="detail-grid" id="detailGrid">
-      <div class="detail-item" id="detailWhatItem"><span data-i18n="detailWhat">它原本是什麼？</span><b id="detailDescription"></b></div>
+      <div class="detail-item" id="detailWhatItem"><span id="detailWhatLabel" data-i18n="detailWhat">它原本是什麼？</span><b id="detailDescription"></b></div>
       <div class="detail-item" id="detailCauseItem"><span data-i18n="detailCause">死因</span><b id="detailCauseValue"></b></div>
       <div class="detail-item" id="detailMoneyItem"><span data-i18n="detailMoney">損失</span><b id="detailMoneyValue"></b></div>
       <div class="detail-item" id="detailTimeItem"><span data-i18n="detailTime">浪費時間</span><b id="detailTimeValue"></b></div>
@@ -472,14 +488,14 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding-top:34px}
     <a class="project-link" id="projectLink" target="_blank" rel="noopener noreferrer" data-i18n="viewProject">↗ 查看舊專案</a>
 
     <div class="story" id="detailStoryWrap">
-      <div class="small" data-i18n="storyTitle">它是怎麼死的</div>
+      <div class="small" id="detailStoryTitle" data-i18n="storyTitle">它是怎麼死的</div>
       <div id="detailStory" style="margin-top:7px;line-height:1.65"></div>
     </div>
 
     <div class="detail-owner-note" id="detailOwnerNote" data-i18n="ownerNote">✓ 這是你的墓碑。你可以編輯資訊，或在專案重新上線時宣布復活。</div>
     <div class="detail-public-note" id="detailPublicNote" data-i18n="publicNote">訪客可以獻花致意或分享這座墓碑。</div>
 
-    <div class="detail-section-label" data-i18n="visitorActions">致意與分享</div>
+    <div class="detail-section-label" id="visitorActionsLabel" data-i18n="visitorActions">致意與分享</div>
     <div class="actions three">
       <button class="action primary" id="respectBtn" onclick="payRespect()">🌹 <span data-i18n="respect">致意</span></button>
       <button class="action" onclick="toggleShare()" data-i18n="share">🔗 分享墓碑</button>
@@ -511,8 +527,8 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding-top:34px}
 <div class="modal">
   <div class="modal-head">
     <div>
-      <h2 data-i18n="detailsTitle">讓這座墓碑更完整</h2>
-      <div class="small" data-i18n="detailsSub">全部選填。不想寫也沒關係。</div>
+      <h2 id="detailsDialogTitle" data-i18n="detailsTitle">讓這座墓碑更完整</h2>
+      <div class="small" id="detailsDialogSub" data-i18n="detailsSub">全部選填。不想寫也沒關係。</div>
       <div class="content-warning">
         <b data-i18n="contentWarnTitle">⚠ 內容注意</b>
         <div data-i18n="contentWarnText">請勿放入個資、侵權內容、冒充他人、仇恨或騷擾、露骨 18+ 內容、垃圾廣告、詐騙或惡意連結。</div>
@@ -521,27 +537,43 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding-top:34px}
     <button class="close" onclick="detailsDialog.close()">×</button>
   </div>
   <form id="detailsForm">
-    <label data-i18n="whatWasIt">它原本是什麼？</label>
+    <div id="memorialDetailsCategory" style="display:none">
+      <label id="detailsCategoryLabel">紀念類型</label>
+      <select id="detailsMemorialCategory">
+        <option value="pet">🐾 寵物</option>
+        <option value="person">♡ 人</option>
+        <option value="place">📍 地方</option>
+        <option value="memory">💭 回憶</option>
+        <option value="life_chapter">🌿 人生階段</option>
+        <option value="other">🕯️ 其他</option>
+      </select>
+    </div>
+
+    <label id="descriptionLabel" data-i18n="whatWasIt">它原本是什麼？</label>
     <input id="description" maxlength="120" data-ph="whatWasItPh">
 
-    <label data-i18n="storyLabel">它是怎麼死的？</label>
+    <label id="storyLabelEl" data-i18n="storyLabel">它是怎麼死的？</label>
     <textarea id="story" maxlength="1200" data-ph="storyPh"></textarea>
 
-    <label data-i18n="timeWasted">⏱ 你浪費了多久？</label>
-    <input id="timeWasted" maxlength="40" data-ph="timePh">
+    <div id="projectTimeField">
+      <label data-i18n="timeWasted">⏱ 你浪費了多久？</label>
+      <input id="timeWasted" maxlength="40" data-ph="timePh">
+    </div>
 
     <button class="optional-toggle" type="button" id="optionalToggle" onclick="toggleOptional()" data-i18n="moreOptional">更多選填資料 ▾</button>
 
     <div class="optional-fields" id="optionalFields">
       <div class="row">
-        <div><label data-i18n="born">出生年份</label><input id="born" type="number" min="1980" max="2100" placeholder="2025"></div>
-        <div><label data-i18n="died">死亡年份</label><input id="died" type="number" min="1980" max="2100" placeholder="2026"></div>
+        <div><label id="bornLabel" data-i18n="born">出生年份</label><input id="born" type="number" min="1900" max="2100" placeholder="2025"></div>
+        <div><label id="diedLabel" data-i18n="died">死亡年份</label><input id="died" type="number" min="1900" max="2100" placeholder="2026"></div>
       </div>
 
-      <label data-i18n="moneyLost">💸 損失多少錢？</label>
-      <input id="moneyLost" type="number" min="0" step="1" placeholder="3420">
+      <div id="projectMoneyField">
+        <label data-i18n="moneyLost">💸 損失多少錢？</label>
+        <input id="moneyLost" type="number" min="0" step="1" placeholder="3420">
+      </div>
 
-      <label data-i18n="url">專案網址（可留空）</label>
+      <label id="urlLabel" data-i18n="url">專案網址（可留空）</label>
       <input id="url" type="url" placeholder="https://">
     </div>
 
@@ -618,7 +650,7 @@ en:{
 const SUPABASE_URL="https://csbgmzfvwqwhcbvvhgxw.supabase.co";
 const SUPABASE_KEY="sb_publishable_-Yq8Zt1tR2Kll07EXuKavA_yX4I56H3";
 const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-const PUBLIC_GRAVE_COLUMNS="id,name,cause_index,epitaph,description,story,born_year,died_year,project_url,money_lost,time_wasted,respects,created_at,resurrected,resurrected_at,grave_type";
+const PUBLIC_GRAVE_COLUMNS="id,name,cause_index,epitaph,description,story,born_year,died_year,project_url,money_lost,time_wasted,respects,created_at,resurrected,resurrected_at,grave_type,memorial_category,memorial_image_url";
 
 function makeOwnerToken(){
   if(window.crypto?.randomUUID) return crypto.randomUUID();
@@ -840,7 +872,9 @@ function fromRow(r){
    createdAt:r.created_at||"",
    resurrected:Boolean(r.resurrected),
    resurrectedAt:r.resurrected_at||"",
-   graveType:r.grave_type==="memorial"?"memorial":"project"
+   graveType:r.grave_type==="memorial"?"memorial":"project",
+   memorialCategory:r.memorial_category||"other",
+   memorialImageUrl:r.memorial_image_url||""
  };
 }
 
@@ -937,6 +971,11 @@ async function loadMoreGraves(){
  }
 }
 
+function memorialCategoryText(v){
+ const zh={pet:"🐾 寵物",person:"♡ 人",place:"📍 地方",memory:"💭 回憶",life_chapter:"🌿 人生階段",other:"🕯️ 其他"};
+ const en={pet:"🐾 Pet",person:"♡ Person",place:"📍 Place",memory:"💭 Memory",life_chapter:"🌿 Life chapter",other:"🕯️ Other"};
+ return (lang==="zh"?zh:en)[v]||(lang==="zh"?zh.other:en.other);
+}
 function causeText(g){return T[lang].causes[g.causeIndex]||T[lang].causes[10]}
 function isRecentlyResurrected(g){
  if(!g.resurrected||!g.resurrectedAt)return false;
@@ -964,11 +1003,23 @@ function applyBuryTypeUI(){
  typeProjectBtn.classList.toggle("active",!memorial);
  typeMemorialBtn.classList.toggle("active",memorial);
  projectCauseField.style.display=memorial?"none":"block";
+ memorialCreateFields.style.display=memorial?"block":"none";
  cause.required=!memorial;
+ memorialCategory.required=memorial;
  nameLabel.textContent=memorial?(lang==="zh"?"① 你想紀念什麼？ *":"① What would you like to remember? *"):(lang==="zh"?"① 它叫什麼？ *":"① What was it called? *");
  epitaphLabel.textContent=memorial?(lang==="zh"?"② 留一句想說的話":"② Leave a few words"):(lang==="zh"?"③ 留一句遺言":"③ Leave an epitaph");
  projectName.placeholder=memorial?(lang==="zh"?"例如：Mochi、那間老店、我的高中時光":"e.g. Mochi, the old shop, my high school years"):T[lang].projectNamePh;
  epitaph.placeholder=memorial?(lang==="zh"?"謝謝你曾經來過。":"Thank you for being here."):T[lang].epitaphPh;
+ if(memorial){
+   memorialCategoryLabel.textContent=lang==="zh"?"② 紀念類型 *":"② Memorial type *";
+   memorialStartLabel.textContent=lang==="zh"?"開始／相遇年份":"Started / met";
+   memorialEndLabel.textContent=lang==="zh"?"告別／結束年份":"Farewell / ended";
+   buryForm.querySelector(".submit").textContent=lang==="zh"?"🕯️ 建立紀念":"🕯️ Create memorial";
+   buryForm.querySelector(".form-note").textContent=lang==="zh"?"建立後會立刻得到一個紀念編號。":"You'll get a memorial number immediately.";
+ }else{
+   buryForm.querySelector(".submit").textContent=T[lang].submit;
+   buryForm.querySelector(".form-note").textContent=T[lang].formNote;
+ }
 }
 function applyGardenUI(){
  const memorial=gardenMode==="memorial";
@@ -988,6 +1039,9 @@ function applyGardenUI(){
    kicker.textContent=T[lang].kicker; title.innerHTML=escapeHtml(T[lang].title).replace("\n","<br>"); sub.textContent=T[lang].subtitle;cta.textContent=T[lang].bury;
    latest.textContent=T[lang].latest;latestSub.textContent=T[lang].latestSub;
  }
+ filterDead.style.display=memorial?"none":"";
+ filterRise.style.display=memorial?"none":"";
+ filterStory.textContent=memorial?(lang==="zh"?"有故事":"Has story"):(lang==="zh"?"有故事":"Has story");
  const projectOnly=document.querySelectorAll(".project-only-section");
  projectOnly.forEach(x=>x.style.display=memorial?"none":"");
  if(typeof graveSort!=="undefined"){
@@ -1045,6 +1099,20 @@ function renderI18n(){
    typeMemorialTitle.textContent=lang==="zh"?"🕯️ 紀念碑":"🕯️ Memorial";
    typeProjectHelp.textContent=lang==="zh"?"結束的 App、遊戲、網站、創業或頻道":"Ended apps, games, websites, startups or channels";
    typeMemorialHelp.textContent=lang==="zh"?"寵物、回憶、人生階段或值得留下的事物":"Pets, memories, life chapters or things worth remembering";
+   const memOpts=[
+     ["pet",lang==="zh"?"🐾 寵物":"🐾 Pet"],
+     ["person",lang==="zh"?"♡ 人":"♡ Person"],
+     ["place",lang==="zh"?"📍 地方":"📍 Place"],
+     ["memory",lang==="zh"?"💭 回憶":"💭 Memory"],
+     ["life_chapter",lang==="zh"?"🌿 人生階段":"🌿 Life chapter"],
+     ["other",lang==="zh"?"🕯️ 其他":"🕯️ Other"]
+   ];
+   [memorialCategory,detailsMemorialCategory].forEach(sel=>{
+     if(!sel)return;
+     const cur=sel.value;
+     sel.innerHTML=memOpts.map(x=>'<option value="'+x[0]+'">'+x[1]+'</option>').join("");
+     if(memOpts.some(x=>x[0]===cur))sel.value=cur;
+   });
    applyGardenUI();
    applyBuryTypeUI();
  }
@@ -1090,7 +1158,9 @@ function renderGraves(){
  }
  list.forEach(g=>{
    const el=document.createElement("article");el.className="grave"+(isRecentlyResurrected(g)?" recently-resurrected":"");
-   const facts=g.graveType==="memorial"?[]:[
+   const facts=g.graveType==="memorial"?[
+     '<div class="card-fact"><span class="card-fact-label">'+(lang==="zh"?"類型":"Type")+'</span><span class="card-fact-value">'+escapeHtml(memorialCategoryText(g.memorialCategory))+'</span></div>'
+   ]:[
      '<div class="card-fact"><span class="card-fact-label">'+(lang==="zh"?"死因":"Cause")+'</span><span class="card-fact-value">'+escapeHtml(causeText(g))+'</span></div>'
    ];
    if(g.graveType!=="memorial" && g.timeWasted){
@@ -1101,7 +1171,7 @@ function renderGraves(){
    }
    el.innerHTML=
     (g.resurrected?'<div class="card-status" data-tooltip="'+escapeHtml(lang==="zh"?"復活後 12 小時內會保留淡綠色外框與光暈":"A soft green border and glow remain for 12 hours after resurrection")+'">'+(lang==="zh"?"🌱 已復活":"🌱 Resurrected")+'</div>':'')+
-    '<div class="stone">🪦</div>'+
+    '<div class="stone">'+(g.graveType==="memorial"?"🕯️":"🪦")+'</div>'+
     '<h3>'+escapeHtml(g.name)+'</h3>'+
     '<div class="meta">'+escapeHtml(years(g))+'</div>'+
     '<p class="epitaph">“'+escapeHtml(g.epitaph||g.description||"R.I.P.")+'”</p>'+
@@ -1178,13 +1248,22 @@ function fillDetail(g){
  }else{
    resurrectedBadge.style.display="none";
  }
+ const isMemorial=g.graveType==="memorial";
+ document.querySelector(".detail-stone").textContent=isMemorial?"🕯️":"🪦";
+ graveNumber.textContent=(isMemorial?"MEMORIAL #":"GRAVE #")+g.id;
  detailName.textContent=g.name;
  detailYears.textContent=years(g);
  detailYears.style.display=(g.born||g.died)?"block":"none";
  detailEpitaph.textContent='“'+(g.epitaph||g.description||"R.I.P.")+'”';
 
  detailDescription.textContent=g.description||"";
- detailWhatItem.style.display=g.description?"block":"none";
+ detailWhatLabel.textContent=isMemorial?(lang==="zh"?"紀念類型":"Memorial type"):T[lang].detailWhat;
+ if(isMemorial){
+   detailDescription.textContent=memorialCategoryText(g.memorialCategory)+(g.description?" · "+g.description:"");
+   detailWhatItem.style.display="block";
+ }else{
+   detailWhatItem.style.display=g.description?"block":"none";
+ }
  detailCauseValue.textContent=causeText(g);
  detailCauseItem.style.display=g.graveType==="memorial"?"none":"block";
  detailMoneyValue.textContent=money(g.moneyLost);
@@ -1193,6 +1272,7 @@ function fillDetail(g){
  detailTimeItem.style.display=g.graveType!=="memorial"&&g.timeWasted?"block":"none";
 
  detailStory.textContent=g.story||"";
+ detailStoryTitle.textContent=isMemorial?(lang==="zh"?"關於這段紀念":"About this memorial"):T[lang].storyTitle;
  detailStoryWrap.style.display=g.story?"block":"none";
 
  projectLink.style.display=g.url?"inline-block":"none";
@@ -1200,8 +1280,19 @@ function fillDetail(g){
 
  respectBtn.innerHTML='🌹 '+(g.graveType==="memorial"?(lang==="zh"?"獻花":"Leave a flower"):T[lang].respect)+' · '+g.respects;
  const ownsGrave=Boolean(getOwnerToken(g.id));
- if(typeof detailOwnerNote!=="undefined") detailOwnerNote.style.display=ownsGrave?"block":"none";
- if(typeof detailPublicNote!=="undefined") detailPublicNote.style.display=ownsGrave?"none":"block";
+ if(typeof detailOwnerNote!=="undefined"){
+   detailOwnerNote.textContent=isMemorial
+     ?(lang==="zh"?"✓ 這是你的紀念。你可以隨時補充故事與資料。":"✓ This is your memorial. You can add or edit its story anytime.")
+     :T[lang].ownerNote;
+   detailOwnerNote.style.display=ownsGrave?"block":"none";
+ }
+ if(typeof detailPublicNote!=="undefined"){
+   detailPublicNote.textContent=isMemorial
+     ?(lang==="zh"?"訪客可以獻上一朵花，或分享這段紀念。":"Visitors can leave a flower or share this memorial.")
+     :T[lang].publicNote;
+   detailPublicNote.style.display=ownsGrave?"none":"block";
+ }
+ visitorActionsLabel.textContent=isMemorial?(lang==="zh"?"獻花與分享":"Flowers & share"):T[lang].visitorActions;
  if(typeof ownerActionsLabel!=="undefined") ownerActionsLabel.style.display=ownsGrave?"block":"none";
  if(typeof editDetailsBtn!=="undefined"){
    editDetailsBtn.style.display=ownsGrave?"block":"none";
@@ -1247,10 +1338,13 @@ buryForm.addEventListener("submit",async e=>{
    const ownerToken=makeOwnerToken();
    const payload={
      name:projectName.value.trim(),
-     cause_index:Number(cause.value),
+     cause_index:buryType==="memorial"?10:Number(cause.value),
      epitaph:epitaph.value.trim()||null,
      owner_token:ownerToken,
-     grave_type:buryType
+     grave_type:buryType,
+     memorial_category:buryType==="memorial"?memorialCategory.value:null,
+     born_year:buryType==="memorial"&&memorialStartYear.value?Number(memorialStartYear.value):null,
+     died_year:buryType==="memorial"&&memorialEndYear.value?Number(memorialEndYear.value):null
    };
    const {data,error}=await supabaseClient
      .from("graves")
@@ -1290,6 +1384,7 @@ function openDetails(){
    showToast(lang==="zh"?"只有建立這座墓碑的瀏覽器可以編輯":"Only the browser that created this grave can edit it");
    return;
  }
+ const isMemorial=g.graveType==="memorial";
  description.value=g.description||"";
  born.value=g.born||"";
  died.value=g.died||"";
@@ -1298,7 +1393,22 @@ function openDetails(){
  moneyLost.value=g.moneyLost||"";
  timeWasted.value=g.timeWasted||"";
 
- const hasOptional=Boolean(g.born||g.died||g.url||g.moneyLost);
+ memorialDetailsCategory.style.display=isMemorial?"block":"none";
+ projectTimeField.style.display=isMemorial?"none":"block";
+ projectMoneyField.style.display=isMemorial?"none":"block";
+ detailsMemorialCategory.value=g.memorialCategory||"other";
+
+ detailsDialogTitle.textContent=isMemorial?(lang==="zh"?"讓這段紀念更完整":"Complete this memorial"):T[lang].detailsTitle;
+ detailsDialogSub.textContent=isMemorial?(lang==="zh"?"只留下你願意分享的內容就好。":"Only share what you want to leave here."):T[lang].detailsSub;
+ descriptionLabel.textContent=isMemorial?(lang==="zh"?"補充說明":"A short note"):T[lang].whatWasIt;
+ description.placeholder=isMemorial?(lang==="zh"?"例如：陪伴我長大的米克斯狗狗":"e.g. The dog who grew up with me"):T[lang].whatWasItPh;
+ storyLabelEl.textContent=isMemorial?(lang==="zh"?"關於它的故事":"The story"):T[lang].storyLabel;
+ story.placeholder=isMemorial?(lang==="zh"?"寫下你想留下來的回憶。":"Write the memory you want to keep."):T[lang].storyPh;
+ bornLabel.textContent=isMemorial?(lang==="zh"?"開始／相遇年份":"Started / met"):T[lang].born;
+ diedLabel.textContent=isMemorial?(lang==="zh"?"告別／結束年份":"Farewell / ended"):T[lang].died;
+ urlLabel.textContent=isMemorial?(lang==="zh"?"相關連結（可留空）":"Related link (optional)"):T[lang].url;
+
+ const hasOptional=Boolean(g.born||g.died||g.url||(!isMemorial&&g.moneyLost));
  optionalFields.classList.toggle("open",hasOptional);
  optionalToggle.textContent=hasOptional?T[lang].lessOptional:T[lang].moreOptional;
 
@@ -1343,18 +1453,35 @@ detailsForm.addEventListener("submit",async e=>{
    const token=getOwnerToken(g.id);
    if(!token) throw new Error(lang==="zh"?"找不到這座墓碑的編輯鑰匙":"Edit key not found");
 
-   const {error}=await supabaseClient.rpc("update_grave_details",{
-     grave_id:g.id,
-     edit_token:token,
-     new_description:payload.description,
-     new_story:payload.story,
-     new_time_wasted:payload.time_wasted,
-     new_born_year:payload.born_year,
-     new_died_year:payload.died_year,
-     new_money_lost:payload.money_lost,
-     new_project_url:payload.project_url
-   });
-   if(error) throw error;
+   let updateError=null;
+   if(g.graveType==="memorial"){
+     const {error}=await supabaseClient.rpc("update_memorial_details",{
+       grave_id:g.id,
+       edit_token:token,
+       new_category:detailsMemorialCategory.value||"other",
+       new_description:payload.description,
+       new_story:payload.story,
+       new_start_year:payload.born_year,
+       new_end_year:payload.died_year,
+       new_url:payload.project_url,
+       new_image_url:g.memorialImageUrl||null
+     });
+     updateError=error;
+   }else{
+     const {error}=await supabaseClient.rpc("update_grave_details",{
+       grave_id:g.id,
+       edit_token:token,
+       new_description:payload.description,
+       new_story:payload.story,
+       new_time_wasted:payload.time_wasted,
+       new_born_year:payload.born_year,
+       new_died_year:payload.died_year,
+       new_money_lost:payload.money_lost,
+       new_project_url:payload.project_url
+     });
+     updateError=error;
+   }
+   if(updateError) throw updateError;
 
    const {data:updatedRow,error:reloadError}=await supabaseClient
      .from("graves")
@@ -1440,7 +1567,7 @@ async function payRespect(){
    localStorage.setItem(key,"1");
    renderAll();
    fillDetail(g);
-   showToast(T[lang].respected);
+   showToast(g.graveType==="memorial"?(lang==="zh"?"你獻上了一朵花 🌹":"You left a flower 🌹"):T[lang].respected);
  }catch(err){
    console.error("Respect failed",err);
    showToast(lang==="zh"?"致意失敗，請再試一次":"Could not pay respects. Please try again.");
@@ -1455,6 +1582,11 @@ function buildShareText(g){
  const last=g.epitaph?(' “'+g.epitaph+'”'):"";
  const cause=causeText(g);
  const respects=Number(g.respects||0);
+ if(g.graveType==="memorial"){
+   return lang==="zh"
+     ? "🕯️ 為 "+g.name+" 留下一段紀念。"+last+"｜🌹 "+respects+" 朵花｜MEMORIAL #"+g.id
+     : "🕯️ A memorial for "+g.name+"."+last+" | 🌹 "+respects+" flowers | MEMORIAL #"+g.id;
+ }
  if(g.resurrected){
    return lang==="zh"
      ? "🌱 "+g.name+" 從 Internet Graveyard 復活了。"+last+"｜原死因："+cause+"｜🌹 "+respects+" 次致意｜GRAVE #"+g.id
