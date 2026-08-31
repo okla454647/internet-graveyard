@@ -68,7 +68,7 @@ body.memorial-mode .stone{filter:saturate(.55)}
 .image-preview{display:none;margin-top:10px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#0b100c}
 .image-preview img{display:block;width:100%;max-height:320px;object-fit:contain}
 .memorial-card-image{
-  width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:12px;margin:0 0 12px;
+  width:100%;height:148px;object-fit:cover;border-radius:12px;margin:0 0 12px;
   border:1px solid var(--line);display:block;background:#0b100c
 }
 .memorial-detail-image{
@@ -503,17 +503,19 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding-top:34px}
     <button class="close" onclick="detailDialog.close()">×</button>
   </div>
   <div class="detail-grave">
-    <div class="buried-badge" id="buriedBadge" data-i18n="buriedBadge">✓ 它已經安息了</div>
-    <div class="resurrected-badge" id="resurrectedBadge"></div>
-    <div class="completion-copy" id="completionCopy" data-i18n="completionCopy">你的專案現在有一個永久墓碑編號。分享它，或把完整故事留給後來的人。</div>
-    <div class="completion-actions" id="completionActions">
-      <button class="completion-share" id="completionShareBtn" type="button" onclick="shareNewGrave()">🔗 分享</button>
-      <button class="completion-view" id="completionViewBtn" type="button" onclick="finishCompletion()">查看墓碑</button>
+    <div class="completion-moment" id="completionMoment">
+      <div class="buried-badge" id="buriedBadge" data-i18n="buriedBadge">✓ 它已經安息了</div>
+      <div class="completion-copy" id="completionCopy" data-i18n="completionCopy">你的專案現在有一個永久墓碑編號。分享它，或把完整故事留給後來的人。</div>
+      <div class="completion-actions" id="completionActions">
+        <button class="completion-share" id="completionShareBtn" type="button" onclick="shareNewGrave()">🔗 分享</button>
+        <button class="completion-view" id="completionViewBtn" type="button" onclick="finishCompletion()">查看墓碑</button>
+      </div>
+      <button class="completion-upgrade" id="completionUpgradeBtn" type="button" onclick="previewUpgrade()">
+        <b id="completionUpgradeTitle">✨ 讓這座墓碑更特別</b>
+        <span id="completionUpgradeSub">升級外觀與更多紀念功能（即將推出）</span>
+      </button>
     </div>
-    <button class="completion-upgrade" id="completionUpgradeBtn" type="button" onclick="previewUpgrade()">
-      <b id="completionUpgradeTitle">✨ 讓這座墓碑更特別</b>
-      <span id="completionUpgradeSub">升級外觀與更多紀念功能（即將推出）</span>
-    </button>
+    <div class="resurrected-badge" id="resurrectedBadge"></div>
     <img class="memorial-detail-image" id="memorialDetailImage" alt="" onclick="openImageViewer(this.src)" onload="this.classList.remove('is-loading')" onerror="this.style.display='none'">
     <div class="detail-stone">🪦</div>
     <div class="grave-id-hero" id="graveNumber"></div>
@@ -1377,6 +1379,7 @@ function openDetail(id,isNew){
 function fillDetail(g){
  const isNew=justCreatedId===g.id;
  const isMemorial=g.graveType==="memorial";
+ completionMoment.style.display=isNew?"block":"none";
  buriedBadge.style.display=isNew && !g.resurrected?"block":"none";
  completionCopy.style.display=isNew?"block":"none";
  completionActions.style.display=isNew?"grid":"none";
