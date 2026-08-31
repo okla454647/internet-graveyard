@@ -62,6 +62,13 @@ body.memorial-mode .stone{filter:saturate(.55)}
 .type-choice button{border:1px solid var(--line);background:#0d120e;color:var(--text);border-radius:13px;padding:14px;text-align:left}
 .type-choice button.active{border-color:#8b948a;background:#182019}
 .type-choice b{display:block;margin-bottom:4px}.type-choice span{color:var(--muted);font-size:12px;line-height:1.45;display:block}
+.memorial-image-field{margin-top:14px}
+.memorial-image-field input[type=file]{padding:10px;background:#0c110d;border:1px dashed #465047;border-radius:12px;width:100%;color:var(--muted)}
+.image-help{font-size:12px;color:var(--muted);margin-top:7px;line-height:1.45}
+.image-preview{display:none;margin-top:10px;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#0b100c}
+.image-preview img{display:block;width:100%;max-height:320px;object-fit:contain}
+.memorial-card-image{width:100%;height:160px;object-fit:cover;border-radius:12px;margin:0 0 12px;border:1px solid var(--line);display:block}
+.memorial-detail-image{display:none;width:100%;max-height:540px;object-fit:contain;margin:0 auto 18px;border-radius:16px;border:1px solid var(--line);background:#0b100c}
 section{padding:38px 0}
 .section-head{display:flex;align-items:end;justify-content:space-between;margin-bottom:18px}
 h2{margin:0;font-size:28px}.small{color:var(--muted);font-size:14px;margin-top:5px}
@@ -446,6 +453,12 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding-top:34px}
         <div><label id="memorialStartLabel">開始／相遇年份</label><input id="memorialStartYear" type="number" min="1900" max="2100" placeholder="2012"></div>
         <div><label id="memorialEndLabel">告別／結束年份</label><input id="memorialEndYear" type="number" min="1900" max="2100" placeholder="2026"></div>
       </div>
+      <div class="memorial-image-field">
+        <label id="memorialImageLabel">照片（選填）</label>
+        <input id="memorialImage" type="file" accept="image/jpeg,image/png,image/webp" onchange="previewMemorialImage(this,'createImagePreview')">
+        <div class="image-help" id="memorialImageHelp">可選 1 張。原圖最多 10MB，網站會自動縮小並壓縮後上傳。</div>
+        <div class="image-preview" id="createImagePreview"><img alt=""></div>
+      </div>
     </div>
 
     <label id="epitaphLabel" data-i18n="epitaph">③ 留一句遺言</label>
@@ -472,6 +485,7 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding-top:34px}
     <div class="buried-badge" id="buriedBadge" data-i18n="buriedBadge">✓ 它已經安息了</div>
     <div class="resurrected-badge" id="resurrectedBadge"></div>
     <div class="completion-copy" id="completionCopy" data-i18n="completionCopy">你的專案現在有一個永久墓碑編號。分享它，或把完整故事留給後來的人。</div>
+    <img class="memorial-detail-image" id="memorialDetailImage" alt="">
     <div class="detail-stone">🪦</div>
     <div class="grave-id-hero" id="graveNumber"></div>
     <h2 id="detailName"></h2>
@@ -547,6 +561,12 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding-top:34px}
         <option value="life_chapter">🌿 人生階段</option>
         <option value="other">🕯️ 其他</option>
       </select>
+      <div class="memorial-image-field">
+        <label id="detailsImageLabel">照片</label>
+        <input id="detailsMemorialImage" type="file" accept="image/jpeg,image/png,image/webp" onchange="previewMemorialImage(this,'detailsImagePreview')">
+        <div class="image-help" id="detailsImageHelp">更換照片時，會自動縮小並壓縮後上傳。</div>
+        <div class="image-preview" id="detailsImagePreview"><img alt=""></div>
+      </div>
     </div>
 
     <label id="descriptionLabel" data-i18n="whatWasIt">它原本是什麼？</label>
@@ -1114,6 +1134,10 @@ function renderI18n(){
      sel.innerHTML=memOpts.map(x=>'<option value="'+x[0]+'">'+x[1]+'</option>').join("");
      if(memOpts.some(x=>x[0]===cur))sel.value=cur;
    });
+   memorialImageLabel.textContent=lang==="zh"?"照片（選填）":"Photo (optional)";
+   memorialImageHelp.textContent=lang==="zh"?"可選 1 張。原圖最多 10MB，網站會自動縮小並壓縮後上傳。":"Choose 1 photo. Up to 10MB; it will be resized and compressed before upload.";
+   detailsImageLabel.textContent=lang==="zh"?"照片":"Photo";
+   detailsImageHelp.textContent=lang==="zh"?"更換照片時，會自動縮小並壓縮後上傳。":"Replacement photos are resized and compressed before upload.";
    applyGardenUI();
    applyBuryTypeUI();
  }
@@ -1171,6 +1195,7 @@ function renderGraves(){
      facts.push('<div class="card-fact"><span class="card-fact-label">'+(lang==="zh"?"損失":"Loss")+'</span><span class="card-fact-value">'+escapeHtml(money(g.moneyLost))+'</span></div>');
    }
    el.innerHTML=
+    (g.graveType==="memorial"&&g.memorialImageUrl?'<img class="memorial-card-image" src="'+escapeHtml(g.memorialImageUrl)+'" alt="" loading="lazy">':'')+
     (g.resurrected?'<div class="card-status" data-tooltip="'+escapeHtml(lang==="zh"?"復活後 12 小時內會保留淡綠色外框與光暈":"A soft green border and glow remain for 12 hours after resurrection")+'">'+(lang==="zh"?"🌱 已復活":"🌱 Resurrected")+'</div>':'')+
     '<div class="stone">'+(g.graveType==="memorial"?"🕯️":"🪦")+'</div>'+
     '<h3>'+escapeHtml(g.name)+'</h3>'+
@@ -1251,6 +1276,13 @@ function fillDetail(g){
  }
  const isMemorial=g.graveType==="memorial";
  document.querySelector(".detail-stone").textContent=isMemorial?"🕯️":"🪦";
+ if(isMemorial && g.memorialImageUrl){
+   memorialDetailImage.src=g.memorialImageUrl;
+   memorialDetailImage.style.display="block";
+ }else{
+   memorialDetailImage.removeAttribute("src");
+   memorialDetailImage.style.display="none";
+ }
  graveNumber.textContent=(isMemorial?"MEMORIAL #":"GRAVE #")+g.id;
  detailName.textContent=g.name;
  detailYears.textContent=years(g);
@@ -1323,6 +1355,61 @@ function contentBlockedMessage(term){
    :"Your content contains a blocked term: “"+term+"”. Please edit it before submitting.";
 }
 
+function previewMemorialImage(input,previewId){
+ const box=document.getElementById(previewId);
+ if(!box)return;
+ const img=box.querySelector("img");
+ const file=input.files&&input.files[0];
+ if(!file){box.style.display="none";img.removeAttribute("src");return}
+ if(file.size>10*1024*1024){
+   input.value="";
+   box.style.display="none";
+   showToast(lang==="zh"?"圖片不能超過 10MB":"Image must be 10MB or smaller");
+   return;
+ }
+ const url=URL.createObjectURL(file);
+ img.onload=()=>URL.revokeObjectURL(url);
+ img.src=url;
+ box.style.display="block";
+}
+
+async function compressMemorialImage(file){
+ if(!file)return null;
+ if(file.size>10*1024*1024)throw new Error(lang==="zh"?"圖片不能超過 10MB":"Image must be 10MB or smaller");
+ if(!["image/jpeg","image/png","image/webp"].includes(file.type))throw new Error(lang==="zh"?"只支援 JPG、PNG、WebP":"Only JPG, PNG and WebP are supported");
+
+ const bitmap=await createImageBitmap(file);
+ const maxSide=1600;
+ const scale=Math.min(1,maxSide/Math.max(bitmap.width,bitmap.height));
+ const width=Math.max(1,Math.round(bitmap.width*scale));
+ const height=Math.max(1,Math.round(bitmap.height*scale));
+ const canvas=document.createElement("canvas");
+ canvas.width=width;canvas.height=height;
+ const ctx=canvas.getContext("2d");
+ ctx.drawImage(bitmap,0,0,width,height);
+ if(bitmap.close)bitmap.close();
+
+ const blob=await new Promise((resolve,reject)=>{
+   canvas.toBlob(b=>b?resolve(b):reject(new Error("Image compression failed")),"image/webp",0.82);
+ });
+ return blob;
+}
+
+async function uploadMemorialImage(file){
+ if(!file)return null;
+ const blob=await compressMemorialImage(file);
+ const name=(crypto.randomUUID?crypto.randomUUID():Date.now()+"-"+Math.random().toString(36).slice(2))+".webp";
+ const path="public/"+name;
+ const {error}=await supabaseClient.storage.from("memorial-images").upload(path,blob,{
+   contentType:"image/webp",
+   cacheControl:"31536000",
+   upsert:false
+ });
+ if(error)throw error;
+ const {data}=supabaseClient.storage.from("memorial-images").getPublicUrl(path);
+ return data.publicUrl;
+}
+
 buryForm.addEventListener("submit",async e=>{
  e.preventDefault();
  const submitBtn=buryForm.querySelector(".submit");
@@ -1337,6 +1424,12 @@ buryForm.addEventListener("submit",async e=>{
    if(blocked) throw new Error(contentBlockedMessage(blocked));
 
    const ownerToken=makeOwnerToken();
+   let memorialImageUrl=null;
+   if(buryType==="memorial" && memorialImage.files && memorialImage.files[0]){
+     submitBtn.textContent=lang==="zh"?"正在處理照片…":"Processing photo…";
+     memorialImageUrl=await uploadMemorialImage(memorialImage.files[0]);
+     submitBtn.textContent=lang==="zh"?"正在建立紀念…":"Creating memorial…";
+   }
    const payload={
      name:projectName.value.trim(),
      cause_index:buryType==="memorial"?10:Number(cause.value),
@@ -1345,7 +1438,8 @@ buryForm.addEventListener("submit",async e=>{
      grave_type:buryType,
      memorial_category:buryType==="memorial"?memorialCategory.value:null,
      born_year:buryType==="memorial"&&memorialStartYear.value?Number(memorialStartYear.value):null,
-     died_year:buryType==="memorial"&&memorialEndYear.value?Number(memorialEndYear.value):null
+     died_year:buryType==="memorial"&&memorialEndYear.value?Number(memorialEndYear.value):null,
+     memorial_image_url:buryType==="memorial"?memorialImageUrl:null
    };
    const {data,error}=await supabaseClient
      .from("graves")
@@ -1361,6 +1455,8 @@ buryForm.addEventListener("submit",async e=>{
 
    buryDialog.close();
    buryForm.reset();
+   createImagePreview.style.display="none";
+   createImagePreview.querySelector("img").removeAttribute("src");
    renderAll();
    openDetail(g.id,true);
  }catch(err){
@@ -1399,6 +1495,14 @@ function openDetails(){
  projectMoneyField.style.display=isMemorial?"none":"block";
  memorialOptionalIntro.style.display=isMemorial?"block":"none";
  detailsMemorialCategory.value=g.memorialCategory||"other";
+ detailsMemorialImage.value="";
+ if(isMemorial && g.memorialImageUrl){
+   detailsImagePreview.querySelector("img").src=g.memorialImageUrl;
+   detailsImagePreview.style.display="block";
+ }else{
+   detailsImagePreview.querySelector("img").removeAttribute("src");
+   detailsImagePreview.style.display="none";
+ }
 
  detailsDialogTitle.textContent=isMemorial?(lang==="zh"?"讓這段紀念更完整":"Complete this memorial"):T[lang].detailsTitle;
  detailsDialogSub.textContent=isMemorial?(lang==="zh"?"只留下你願意分享的內容就好。":"Only share what you want to leave here."):T[lang].detailsSub;
@@ -1457,6 +1561,12 @@ detailsForm.addEventListener("submit",async e=>{
 
    let updateError=null;
    if(g.graveType==="memorial"){
+     let memorialImageUrl=g.memorialImageUrl||null;
+     if(detailsMemorialImage.files&&detailsMemorialImage.files[0]){
+       submitBtn.textContent=lang==="zh"?"正在處理照片…":"Processing photo…";
+       memorialImageUrl=await uploadMemorialImage(detailsMemorialImage.files[0]);
+       submitBtn.textContent=lang==="zh"?"儲存中…":"Saving…";
+     }
      const {error}=await supabaseClient.rpc("update_memorial_details",{
        grave_id:g.id,
        edit_token:token,
@@ -1466,7 +1576,7 @@ detailsForm.addEventListener("submit",async e=>{
        new_start_year:payload.born_year,
        new_end_year:payload.died_year,
        new_url:payload.project_url,
-       new_image_url:g.memorialImageUrl||null
+       new_image_url:memorialImageUrl
      });
      updateError=error;
    }else{
