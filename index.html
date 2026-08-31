@@ -1262,7 +1262,6 @@ function openDetail(id,isNew){
 }
 
 function fillDetail(g){
- graveNumber.textContent="GRAVE #"+g.id;
  const isNew=justCreatedId===g.id;
  buriedBadge.style.display=isNew && !g.resurrected?"block":"none";
  completionCopy.style.display=isNew?"block":"none";
@@ -1283,9 +1282,10 @@ function fillDetail(g){
    memorialDetailImage.removeAttribute("src");
    memorialDetailImage.style.display="none";
  }
+ const isChinese=document.documentElement.lang==="zh-Hant" || zhBtn.classList.contains("active");
  graveNumber.textContent=isMemorial
-   ?((lang==="zh"?"紀念 #":"MEMORIAL #")+g.id)
-   :((lang==="zh"?"墓碑 #":"GRAVE #")+g.id);
+   ?((isChinese?"紀念 #":"MEMORIAL #")+g.id)
+   :((isChinese?"墓碑 #":"GRAVE #")+g.id);
  detailName.textContent=g.name;
  detailYears.textContent=years(g);
  detailYears.style.display=(g.born||g.died)?"block":"none";
