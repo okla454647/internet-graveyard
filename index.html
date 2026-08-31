@@ -563,6 +563,7 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding-top:34px}
     <button class="optional-toggle" type="button" id="optionalToggle" onclick="toggleOptional()" data-i18n="moreOptional">更多選填資料 ▾</button>
 
     <div class="optional-fields" id="optionalFields">
+      <div id="memorialOptionalIntro" style="display:none" class="small">年份與相關連結都是選填。</div>
       <div class="row">
         <div><label id="bornLabel" data-i18n="born">出生年份</label><input id="born" type="number" min="1900" max="2100" placeholder="2025"></div>
         <div><label id="diedLabel" data-i18n="died">死亡年份</label><input id="died" type="number" min="1900" max="2100" placeholder="2026"></div>
@@ -1396,6 +1397,7 @@ function openDetails(){
  memorialDetailsCategory.style.display=isMemorial?"block":"none";
  projectTimeField.style.display=isMemorial?"none":"block";
  projectMoneyField.style.display=isMemorial?"none":"block";
+ memorialOptionalIntro.style.display=isMemorial?"block":"none";
  detailsMemorialCategory.value=g.memorialCategory||"other";
 
  detailsDialogTitle.textContent=isMemorial?(lang==="zh"?"讓這段紀念更完整":"Complete this memorial"):T[lang].detailsTitle;
