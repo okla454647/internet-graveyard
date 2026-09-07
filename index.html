@@ -241,8 +241,10 @@ textarea{min-height:92px;resize:vertical}
   font-size:13px;line-height:1.65
 }
 .completion-actions{
-  display:none;grid-template-columns:1fr 1fr;gap:9px;max-width:430px;margin:0 auto
+  display:none;grid-template-columns:1.2fr 1fr 1fr;gap:9px;max-width:520px;margin:0 auto
 }
+.completion-copy-link{border:1px solid var(--line);background:#151c17;color:var(--text);border-radius:11px;padding:12px 10px;font-weight:800}
+@media(max-width:520px){.completion-actions{grid-template-columns:1fr}.completion-actions button{width:100%}}
 .completion-actions button{
   width:100%;min-height:42px;border-radius:11px;padding:10px 12px;font-weight:800
 }
@@ -549,6 +551,7 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding-top:34px}
       <div class="completion-copy" id="completionCopy" data-i18n="completionCopy">你的專案現在有一個永久墓碑編號。分享它，或把完整故事留給後來的人。</div>
       <div class="completion-actions" id="completionActions">
         <button class="completion-share" id="completionShareBtn" type="button" onclick="shareNewGrave()">🔗 分享</button>
+        <button class="completion-copy-link" id="completionCopyLinkBtn" type="button" onclick="copyNewGraveUrl()">複製專屬連結</button>
         <button class="completion-view" id="completionViewBtn" type="button" onclick="finishCompletion()">查看墓碑</button>
       </div>
       <button class="completion-upgrade" id="completionUpgradeBtn" type="button" onclick="previewUpgrade()">
@@ -1404,8 +1407,20 @@ async function shareNewGrave(){
    }catch(e){if(e?.name!=="AbortError")console.warn(e)}
  }
  try{
-   await navigator.clipboard.writeText(shareText+" "+url);
-   showToast(lang==="zh"?"分享內容已複製":"Share text copied");
+   await navigator.clipboard.writeText(url);
+   showToast(lang==="zh"?"專屬連結已複製":"Link copied");
+ }catch(e){
+   toggleShare();
+ }
+}
+
+async function copyNewGraveUrl(){
+ const g=graves.find(x=>x.id===activeId);if(!g)return;
+ try{
+   await navigator.clipboard.writeText(graveShareUrl(g));
+   showToast(g.graveType==="memorial"
+     ?(lang==="zh"?"紀念連結已複製":"Memorial link copied")
+     :(lang==="zh"?"墓碑連結已複製":"Grave link copied"));
  }catch(e){
    toggleShare();
  }
@@ -1443,16 +1458,20 @@ function fillDetail(g){
    buriedBadge.textContent=isMemorial
      ?(lang==="zh"?"✓ 紀念已建立":"✓ Memorial created")
      :(lang==="zh"?"✓ 已正式下葬":"✓ Officially buried");
+   const createdNumber=g.typeNumber||g.id;
    completionCopy.textContent=isMemorial
      ?(lang==="zh"
-       ?"這段紀念現在有了自己的編號。把它分享給也記得的人，讓這份回憶被留下來。"
-       :"This memory now has its own number. Share it with someone who remembers.")
+       ?"紀念 #"+createdNumber+" 已經留下來了。這是它的專屬頁面；分享給也記得的人，之後都能從同一個連結回來。"
+       :"Memorial #"+createdNumber+" is now here to stay. Share its permanent page with someone who remembers.")
      :(lang==="zh"
-       ?"你的失敗現在有了一個正式墓碑編號。分享出去，讓這次失敗至少留下一點傳說。"
-       :"Your failure now has an official grave number. Share it and leave a little legend behind.");
+       ?"墓碑 #"+createdNumber+" 已正式下葬。這是它的專屬頁面；分享出去，讓這次失敗至少留下一點傳說。"
+       :"Grave #"+createdNumber+" is officially buried. Share its permanent page and leave a little legend behind.");
    completionShareBtn.textContent=isMemorial
      ?(lang==="zh"?"🔗 分享這段紀念":"🔗 Share this memorial")
      :(lang==="zh"?"🔗 分享我的失敗":"🔗 Share my failure");
+   if(typeof completionCopyLinkBtn!=="undefined") completionCopyLinkBtn.textContent=isMemorial
+     ?(lang==="zh"?"複製紀念連結":"Copy memorial link")
+     :(lang==="zh"?"複製墓碑連結":"Copy grave link");
    completionViewBtn.textContent=isMemorial
      ?(lang==="zh"?"查看紀念碑":"View memorial")
      :(lang==="zh"?"查看墓碑":"View grave");
