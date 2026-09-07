@@ -1,0 +1,34 @@
+name: Fix share copy behavior
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-copy-share-url.yml'
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: internet-graveyard
+      - name: Make Copy button copy URL only
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          old='const text=buildShareText(g)+" "+graveShareUrl(g);\n try{\n   await navigator.clipboard.writeText(text);'
+          new='const text=graveShareUrl(g);\n try{\n   await navigator.clipboard.writeText(text);'
+          if old not in s:
+              raise SystemExit('target copyShare code not found')
+          s=s.replace(old,new,1)
+          p.write_text(s)
+          PY
+      - name: Commit fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Make share Copy button copy URL only"
+          git push origin internet-graveyard
