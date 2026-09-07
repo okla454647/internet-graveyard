@@ -1966,7 +1966,7 @@ async function copyGraveUrl(){
 
 async function copyShare(){
  const g=graves.find(x=>x.id===activeId);if(!g)return;
- const text=buildShareText(g)+" "+graveShareUrl(g);
+ const text=graveShareUrl(g);
  try{
    await navigator.clipboard.writeText(text);
    showToast(T[lang].copied);
