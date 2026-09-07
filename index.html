@@ -260,9 +260,18 @@ body.memorial-mode .memorial-card-image{width:100%;aspect-ratio:auto;object-fit:
 .grave-id-hero{color:#879187;font-size:12px;letter-spacing:.12em;margin-bottom:10px}
 .detail-meta{color:var(--muted);margin:4px 0 14px}
 .detail-epitaph{
-  font-family:Georgia,serif;font-size:20px;line-height:1.65;
-  max-width:500px;margin:0 auto;color:#f1eee6
+  position:relative;font-family:Georgia,serif;font-size:20px;line-height:1.65;
+  max-width:500px;margin:34px auto 8px;padding:23px 24px 19px;color:#f1eee6;
+  border-top:1px solid #344038;border-bottom:1px solid #344038
 }
+.detail-epitaph::before{
+  content:"遺言";position:absolute;left:50%;top:-12px;transform:translateX(-50%);
+  padding:3px 11px;background:#101511;color:#8f9a90;font-family:Inter,system-ui,sans-serif;
+  font-size:11px;font-weight:800;letter-spacing:.16em;white-space:nowrap
+}
+body.memorial-mode .detail-epitaph::before{content:"留下的話"}
+html[lang="en"] .detail-epitaph::before{content:"EPITAPH"}
+html[lang="en"] body.memorial-mode .detail-epitaph::before{content:"WORDS LEFT BEHIND"}
 .detail-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:20px;text-align:left}
 .detail-item{border:1px solid var(--line);border-radius:13px;padding:13px;background:#0c110d}
 .detail-item span{display:block;color:var(--muted);font-size:12px;margin-bottom:5px}
