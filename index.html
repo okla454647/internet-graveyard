@@ -349,6 +349,9 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding-top:34px}
   .stats,.hall,.row,.detail-grid,.actions,.actions.three{grid-template-columns:1fr}
   .share-buttons{grid-template-columns:1fr 1fr}
 }
+
+.shared-visitor-cta{display:none;margin-top:22px;padding:18px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,#141b16,#0d120e);text-align:center}
+.shared-visitor-cta b{display:block;font-size:16px;margin-bottom:6px}.shared-visitor-cta p{margin:0 auto 13px;max-width:460px;color:var(--muted);font-size:13px;line-height:1.6}.shared-visitor-cta button{width:100%;border:0;border-radius:11px;padding:13px 16px;background:var(--accent);color:#111;font-weight:850}
 </style>
 </head>
 <body>
@@ -580,6 +583,13 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding-top:34px}
     </div>
     <div class="detail-section-label" id="ownerActionsLabel" data-i18n="ownerActions">墓碑管理</div>
     <button class="action resurrect-action" id="resurrectBtn" onclick="resurrectGrave()">🌱 宣布復活</button>
+
+
+    <div class="shared-visitor-cta" id="sharedVisitorCta">
+      <b id="sharedVisitorCtaTitle"></b>
+      <p id="sharedVisitorCtaCopy"></p>
+      <button id="sharedVisitorCtaBtn" type="button" onclick="createFromSharedGrave()"></button>
+    </div>
 
     <div class="share-panel" id="sharePanel">
       <div class="share-title" data-i18n="shareTitle">把這個失敗正式公告出去</div>
@@ -1514,6 +1524,19 @@ function fillDetail(g){
    resurrectBtn.style.display=ownsGrave && !g.resurrected && g.graveType!=="memorial"?"block":"none";
  }
  sharePanel.style.display="none";
+ const openedFromShare=location.hash==="#grave-"+g.id;
+ if(typeof sharedVisitorCta!=="undefined"){
+   sharedVisitorCta.style.display=!ownsGrave && openedFromShare?"block":"none";
+   sharedVisitorCtaTitle.textContent=isMemorial
+     ?(lang==="zh"?"也有一段你不想忘記的回憶嗎？":"Have a memory you don't want to lose?")
+     :(lang==="zh"?"你也有一個做失敗的東西嗎？":"Have a failed project of your own?");
+   sharedVisitorCtaCopy.textContent=isMemorial
+     ?(lang==="zh"?"替它留下一個自己的紀念編號。免費、不用註冊，約 30 秒。":"Give it its own memorial number. Free, no sign-up, about 30 seconds.")
+     :(lang==="zh"?"別讓它只躺在硬碟裡。替它立一座正式墓碑，免費、不用註冊。":"Don't leave it buried on your hard drive. Give it an official grave — free, no sign-up.");
+   sharedVisitorCtaBtn.textContent=isMemorial
+     ?(lang==="zh"?"🕯️ 建立我的紀念":"🕯️ Create my memorial")
+     :(lang==="zh"?"🪦 埋葬我的失敗":"🪦 Bury my failure");
+ }
  shareCopy.textContent=buildShareText(g);
  if(typeof shareUrlText!=="undefined") shareUrlText.textContent=graveShareUrl(g);
 }
@@ -1958,6 +1981,19 @@ function showToast(msg){
 
 function escapeHtml(v){
  return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+}
+
+
+function createFromSharedGrave(){
+ const g=graves.find(x=>x.id===activeId);
+ if(!g)return;
+ detailDialog.close();
+ gardenMode=g.graveType==="memorial"?"memorial":"project";
+ buryType=gardenMode;
+ applyGardenUI();
+ buryForm.reset();
+ applyBuryTypeUI();
+ buryDialog.showModal();
 }
 
 function openGraveFromHash(){
