@@ -351,7 +351,13 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding-top:34px}
 }
 
 .shared-visitor-cta{display:none;margin-top:22px;padding:18px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,#141b16,#0d120e);text-align:center}
-.shared-visitor-cta b{display:block;font-size:16px;margin-bottom:6px}.shared-visitor-cta p{margin:0 auto 13px;max-width:460px;color:var(--muted);font-size:13px;line-height:1.6}.shared-visitor-cta button{width:100%;border:0;border-radius:11px;padding:13px 16px;background:var(--accent);color:#111;font-weight:850}
+.shared-visitor-cta b{display:block;font-size:16px;margin-bottom:6px}.shared-visitor-cta p{margin:0 auto 13px;max-width:460px;color:var(--muted);font-size:13px;line-height:1.6}
+.shared-visitor-actions{display:grid;grid-template-columns:1.25fr .75fr;gap:9px;margin-top:12px}
+.shared-visitor-actions button{width:100%;border-radius:11px;padding:13px 16px;font-weight:850}
+.shared-visitor-actions .shared-create{border:0;background:var(--accent);color:#111}
+.shared-visitor-actions .shared-browse{border:1px solid var(--line);background:#151c17;color:var(--text)}
+.shared-visitor-proof{margin-top:10px;color:#7f8a81;font-size:11px;line-height:1.45}
+@media(max-width:520px){.shared-visitor-actions{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -588,7 +594,11 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding-top:34px}
     <div class="shared-visitor-cta" id="sharedVisitorCta">
       <b id="sharedVisitorCtaTitle"></b>
       <p id="sharedVisitorCtaCopy"></p>
-      <button id="sharedVisitorCtaBtn" type="button" onclick="createFromSharedGrave()"></button>
+      <div class="shared-visitor-actions">
+        <button class="shared-create" id="sharedVisitorCtaBtn" type="button" onclick="createFromSharedGrave()"></button>
+        <button class="shared-browse" id="sharedVisitorBrowseBtn" type="button" onclick="browseFromSharedGrave()"></button>
+      </div>
+      <div class="shared-visitor-proof" id="sharedVisitorProof"></div>
     </div>
 
     <div class="share-panel" id="sharePanel">
@@ -1538,6 +1548,12 @@ function fillDetail(g){
    sharedVisitorCtaBtn.textContent=isMemorial
      ?(lang==="zh"?"🕯️ 建立我的紀念":"🕯️ Create my memorial")
      :(lang==="zh"?"🪦 埋葬我的失敗":"🪦 Bury my failure");
+   if(typeof sharedVisitorBrowseBtn!=="undefined") sharedVisitorBrowseBtn.textContent=isMemorial
+     ?(lang==="zh"?"看看其他紀念":"Browse memorials")
+     :(lang==="zh"?"逛逛墓園":"Browse graveyard");
+   if(typeof sharedVisitorProof!=="undefined") sharedVisitorProof.textContent=lang==="zh"
+     ?"免費建立 · 不用註冊 · 約 30 秒"
+     :"Free to create · No sign-up · About 30 seconds";
  }
  shareCopy.textContent=buildShareText(g);
  if(typeof shareUrlText!=="undefined") shareUrlText.textContent=graveShareUrl(g);
@@ -1991,16 +2007,38 @@ function escapeHtml(v){
 }
 
 
+function clearSharedHash(){
+ const u=new URL(location.href);
+ u.hash="";
+ history.replaceState(null,"",u.pathname+u.search);
+}
+
 function createFromSharedGrave(){
  const g=graves.find(x=>x.id===activeId);
  if(!g)return;
  detailDialog.close();
  gardenMode=g.graveType==="memorial"?"memorial":"project";
  buryType=gardenMode;
+ clearSharedHash();
  applyGardenUI();
  buryForm.reset();
  applyBuryTypeUI();
  buryDialog.showModal();
+}
+
+function browseFromSharedGrave(){
+ const g=graves.find(x=>x.id===activeId);
+ detailDialog.close();
+ if(g){
+   gardenMode=g.graveType==="memorial"?"memorial":"project";
+   buryType=gardenMode;
+ }
+ clearSharedHash();
+ applyGardenUI();
+ window.requestAnimationFrame(()=>{
+   const target=document.querySelector('.grave-tools')||document.getElementById('graveyard');
+   if(target) target.scrollIntoView({behavior:'smooth',block:'start'});
+ });
 }
 
 async function openGraveFromHash(){
