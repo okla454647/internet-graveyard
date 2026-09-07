@@ -352,6 +352,21 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding-top:34px}
   .share-buttons{grid-template-columns:1fr 1fr}
 }
 
+
+.record-plaque{
+  margin:18px auto 0;max-width:500px;border:1px solid #3a463c;border-radius:14px;
+  background:linear-gradient(180deg,#121914,#0b100c);padding:14px 16px;text-align:left
+}
+.record-plaque-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:10px}
+.record-plaque-title{font-family:Georgia,serif;font-size:14px;font-weight:800;letter-spacing:.05em;color:#eee9df}
+.record-plaque-mark{font-size:11px;color:#879187;border:1px solid #334037;border-radius:999px;padding:5px 8px;white-space:nowrap}
+.record-plaque-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.record-plaque-item{border-top:1px solid rgba(255,255,255,.06);padding-top:8px}
+.record-plaque-item span{display:block;color:var(--muted);font-size:10px;letter-spacing:.05em;margin-bottom:3px}
+.record-plaque-item b{font-size:13px;color:#eef1eb}
+body.memorial-mode .record-plaque{border-color:#454338;background:linear-gradient(180deg,#171713,#0e100d)}
+@media(max-width:520px){.record-plaque-grid{grid-template-columns:1fr 1fr}.record-plaque{padding:13px}}
+
 .shared-visitor-cta{display:none;margin-top:22px;padding:18px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,#141b16,#0d120e);text-align:center}
 .shared-visitor-cta b{display:block;font-size:16px;margin-bottom:6px}.shared-visitor-cta p{margin:0 auto 13px;max-width:460px;color:var(--muted);font-size:13px;line-height:1.6}
 .shared-visitor-actions{display:grid;grid-template-columns:1.25fr .75fr;gap:9px;margin-top:12px}
@@ -566,6 +581,20 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding-top:34px}
     <h2 id="detailName"></h2>
     <div class="detail-meta" id="detailYears"></div>
     <div class="detail-epitaph" id="detailEpitaph"></div>
+
+
+    <div class="record-plaque" id="recordPlaque">
+      <div class="record-plaque-head">
+        <div class="record-plaque-title" id="recordPlaqueTitle">INTERNET GRAVEYARD RECORD</div>
+        <div class="record-plaque-mark" id="recordPlaqueMark">ARCHIVED</div>
+      </div>
+      <div class="record-plaque-grid">
+        <div class="record-plaque-item"><span id="recordNumberLabel">RECORD</span><b id="recordNumber"></b></div>
+        <div class="record-plaque-item"><span id="recordDateLabel">RECORDED</span><b id="recordDate"></b></div>
+        <div class="record-plaque-item"><span id="recordRespectLabel">RESPECTS</span><b id="recordRespect"></b></div>
+        <div class="record-plaque-item"><span id="recordStatusLabel">STATUS</span><b id="recordStatus"></b></div>
+      </div>
+    </div>
 
     <div class="detail-grid" id="detailGrid">
       <div class="detail-item" id="detailWhatItem"><span id="detailWhatLabel" data-i18n="detailWhat">它原本是什麼？</span><b id="detailDescription"></b></div>
@@ -1507,6 +1536,30 @@ function fillDetail(g){
  detailYears.textContent=years(g);
  detailYears.style.display=(g.born||g.died)?"block":"none";
  detailEpitaph.textContent='“'+(g.epitaph||g.description||"R.I.P.")+'”';
+
+
+ if(typeof recordPlaque!=="undefined"){
+   const recorded=g.createdAt?new Date(g.createdAt):null;
+   const dateText=recorded&&!Number.isNaN(recorded.getTime())
+     ?recorded.toLocaleDateString(lang==="zh"?"zh-TW":"en-US",{year:"numeric",month:"short",day:"numeric"})
+     :"—";
+   recordPlaqueTitle.textContent=isMemorial
+     ?(lang==="zh"?"INTERNET GRAVEYARD · 紀念紀錄":"INTERNET GRAVEYARD · MEMORIAL RECORD")
+     :(lang==="zh"?"INTERNET GRAVEYARD · 下葬紀錄":"INTERNET GRAVEYARD · BURIAL RECORD");
+   recordPlaqueMark.textContent=isMemorial
+     ?(lang==="zh"?"已留下":"REMEMBERED")
+     :(g.resurrected?(lang==="zh"?"已復活":"RESURRECTED"):(lang==="zh"?"已封存":"ARCHIVED"));
+   recordNumberLabel.textContent=lang==="zh"?(isMemorial?"紀念編號":"墓碑編號"):"RECORD";
+   recordDateLabel.textContent=lang==="zh"?"建立日期":"RECORDED";
+   recordRespectLabel.textContent=lang==="zh"?(isMemorial?"收到的花":"致意次數"):(isMemorial?"FLOWERS":"RESPECTS");
+   recordStatusLabel.textContent=lang==="zh"?"狀態":"STATUS";
+   recordNumber.textContent=(isMemorial?"#":"#")+displayNumber;
+   recordDate.textContent=dateText;
+   recordRespect.textContent=String(g.respects||0);
+   recordStatus.textContent=isMemorial
+     ?(lang==="zh"?"被記得":"Remembered")
+     :(g.resurrected?(lang==="zh"?"已復活":"Resurrected"):(lang==="zh"?"已下葬":"Buried"));
+ }
 
  detailDescription.textContent=g.description||"";
  detailWhatLabel.textContent=isMemorial?(lang==="zh"?"紀念類型":"Memorial type"):T[lang].detailWhat;
