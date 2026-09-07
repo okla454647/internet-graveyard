@@ -1,0 +1,50 @@
+name: Add shared grave visitor CTA
+
+on:
+  push:
+    branches: [internet-graveyard]
+    paths:
+      - '.github/workflows/add-shared-cta.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: internet-graveyard
+      - name: Patch visitor CTA
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          css='''\n.shared-visitor-cta{display:none;margin-top:22px;padding:18px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,#141b16,#0d120e);text-align:center}\n.shared-visitor-cta b{display:block;font-size:16px;margin-bottom:6px}.shared-visitor-cta p{margin:0 auto 13px;max-width:460px;color:var(--muted);font-size:13px;line-height:1.6}.shared-visitor-cta button{width:100%;border:0;border-radius:11px;padding:13px 16px;background:var(--accent);color:#111;font-weight:850}\n'''
+          if '.shared-visitor-cta{' not in s:
+              s=s.replace('</style>',css+'</style>',1)
+          html='''\n    <div class="shared-visitor-cta" id="sharedVisitorCta">\n      <b id="sharedVisitorCtaTitle"></b>\n      <p id="sharedVisitorCtaCopy"></p>\n      <button id="sharedVisitorCtaBtn" type="button" onclick="createFromSharedGrave()"></button>\n    </div>\n'''
+          marker='''    <div class="share-panel" id="sharePanel">'''
+          if 'id="sharedVisitorCta"' not in s:
+              s=s.replace(marker,html+'\n'+marker,1)
+          old=''' sharePanel.style.display="none";\n shareCopy.textContent=buildShareText(g);'''
+          new=''' sharePanel.style.display="none";\n const openedFromShare=location.hash==="#grave-"+g.id;\n if(typeof sharedVisitorCta!=="undefined"){\n   sharedVisitorCta.style.display=!ownsGrave && openedFromShare?"block":"none";\n   sharedVisitorCtaTitle.textContent=isMemorial\n     ?(lang==="zh"?"也有一段你不想忘記的回憶嗎？":"Have a memory you don't want to lose?")\n     :(lang==="zh"?"你也有一個做失敗的東西嗎？":"Have a failed project of your own?");\n   sharedVisitorCtaCopy.textContent=isMemorial\n     ?(lang==="zh"?"替它留下一個自己的紀念編號。免費、不用註冊，約 30 秒。":"Give it its own memorial number. Free, no sign-up, about 30 seconds.")\n     :(lang==="zh"?"別讓它只躺在硬碟裡。替它立一座正式墓碑，免費、不用註冊。":"Don't leave it buried on your hard drive. Give it an official grave — free, no sign-up.");\n   sharedVisitorCtaBtn.textContent=isMemorial\n     ?(lang==="zh"?"🕯️ 建立我的紀念":"🕯️ Create my memorial")\n     :(lang==="zh"?"🪦 埋葬我的失敗":"🪦 Bury my failure");\n }\n shareCopy.textContent=buildShareText(g);'''
+          if 'const openedFromShare=' not in s:
+              if old not in s: raise SystemExit('fillDetail marker not found')
+              s=s.replace(old,new,1)
+          fn='''\nfunction createFromSharedGrave(){\n const g=graves.find(x=>x.id===activeId);\n if(!g)return;\n detailDialog.close();\n gardenMode=g.graveType==="memorial"?"memorial":"project";\n buryType=gardenMode;\n applyGardenUI();\n buryForm.reset();\n applyBuryTypeUI();\n buryDialog.showModal();\n}\n\n'''
+          if 'function createFromSharedGrave()' not in s:
+              s=s.replace('function openGraveFromHash(){',fn+'function openGraveFromHash(){',1)
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit change
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Add visitor CTA to shared graves"
+          git push origin internet-graveyard
