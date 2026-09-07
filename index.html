@@ -293,7 +293,7 @@ body.memorial-mode .memorial-card-image{width:100%;aspect-ratio:auto;object-fit:
 }
 .share-title{font-weight:800;font-size:14px;margin-bottom:5px}
 .share-copy{color:var(--muted);font-size:13px;line-height:1.55;margin-bottom:12px}
-.share-buttons{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.share-buttons{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
 .share-buttons button{
   border:1px solid var(--line);background:#151c17;color:var(--text);
   border-radius:10px;padding:9px 6px;font-size:12px
@@ -599,6 +599,8 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding-top:34px}
         <b id="shareUrlText" title="Click to copy" onclick="copyGraveUrl()" style="font-size:12px;word-break:break-all;font-weight:600;cursor:pointer"></b>
       </div>
       <div class="share-buttons">
+        <button onclick="shareTo('line')">LINE</button>
+        <button onclick="shareTo('facebook')">Facebook</button>
         <button onclick="shareTo('x')">X</button>
         <button onclick="shareTo('threads')">Threads</button>
         <button onclick="shareTo('reddit')">Reddit</button>
@@ -1906,7 +1908,10 @@ async function payRespect(){
 }
 
 function graveShareUrl(g){
- return location.href.split("#")[0]+"#grave-"+g.id;
+ const u=new URL(location.origin+location.pathname);
+ if(g.graveType==="memorial")u.searchParams.set("type","memorial");
+ u.hash="grave-"+g.id;
+ return u.toString();
 }
 
 function buildShareText(g){
@@ -1949,6 +1954,8 @@ function shareTo(platform){
  const text=buildShareText(g);
  const url=graveShareUrl(g);
  let target="";
+ if(platform==="line") target="https://social-plugins.line.me/lineit/share?url="+encodeURIComponent(url)+"&text="+encodeURIComponent(text);
+ if(platform==="facebook") target="https://www.facebook.com/sharer/sharer.php?u="+encodeURIComponent(url);
  if(platform==="x") target="https://twitter.com/intent/tweet?text="+encodeURIComponent(text+" "+url);
  if(platform==="threads") target="https://www.threads.net/intent/post?text="+encodeURIComponent(text+" "+url);
  if(platform==="reddit") target="https://www.reddit.com/submit?url="+encodeURIComponent(url)+"&title="+encodeURIComponent(text);
@@ -1996,11 +2003,43 @@ function createFromSharedGrave(){
  buryDialog.showModal();
 }
 
-function openGraveFromHash(){
+async function openGraveFromHash(){
  const m=location.hash.match(/^#grave-(\d+)$/);
  if(!m)return;
  const id=Number(m[1]);
- if(graves.some(g=>g.id===id)) openDetail(id,false);
+ const existing=graves.find(g=>g.id===id);
+ if(existing){
+   openDetail(id,false);
+   return;
+ }
+ try{
+   const {data,error}=await supabaseClient
+     .from("graves")
+     .select(PUBLIC_GRAVE_COLUMNS)
+     .eq("id",id)
+     .single();
+   if(error||!data)throw error||new Error("Grave not found");
+   const g=fromRow(data);
+
+   if(g.graveType!==gardenMode){
+     gardenMode=g.graveType;
+     buryType=g.graveType;
+     graveFilter="all";graveSortMode="latest";graveSearchText="";
+     const u=new URL(location.href);
+     if(gardenMode==="memorial")u.searchParams.set("type","memorial"); else u.searchParams.delete("type");
+     history.replaceState(null,"",u.pathname+u.search+u.hash);
+     applyGardenUI();
+     await loadGraves(true);
+     return;
+   }
+
+   graves=[g,...graves.filter(x=>x.id!==g.id)];
+   renderGraves();
+   openDetail(id,false);
+ }catch(err){
+   console.warn("Shared grave could not be opened",err);
+   showToast(lang==="zh"?"找不到這座墓碑，可能已被隱藏或刪除":"This grave could not be found. It may have been hidden or deleted.");
+ }
 }
 
 window.addEventListener("hashchange",openGraveFromHash);
