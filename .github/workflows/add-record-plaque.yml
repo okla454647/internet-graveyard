@@ -1,0 +1,47 @@
+name: Add grave record plaque
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/add-record-plaque.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: internet-graveyard
+      - name: Add permanent record plaque
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+
+          css='''\n.record-plaque{\n  margin:18px auto 0;max-width:500px;border:1px solid #3a463c;border-radius:14px;\n  background:linear-gradient(180deg,#121914,#0b100c);padding:14px 16px;text-align:left\n}\n.record-plaque-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:10px}\n.record-plaque-title{font-family:Georgia,serif;font-size:14px;font-weight:800;letter-spacing:.05em;color:#eee9df}\n.record-plaque-mark{font-size:11px;color:#879187;border:1px solid #334037;border-radius:999px;padding:5px 8px;white-space:nowrap}\n.record-plaque-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}\n.record-plaque-item{border-top:1px solid rgba(255,255,255,.06);padding-top:8px}\n.record-plaque-item span{display:block;color:var(--muted);font-size:10px;letter-spacing:.05em;margin-bottom:3px}\n.record-plaque-item b{font-size:13px;color:#eef1eb}\nbody.memorial-mode .record-plaque{border-color:#454338;background:linear-gradient(180deg,#171713,#0e100d)}\n@media(max-width:520px){.record-plaque-grid{grid-template-columns:1fr 1fr}.record-plaque{padding:13px}}\n'''
+          marker='.shared-visitor-cta{display:none;'
+          if '.record-plaque{' not in s:
+              s=s.replace(marker,css+'\n'+marker,1)
+
+          html='''\n    <div class="record-plaque" id="recordPlaque">\n      <div class="record-plaque-head">\n        <div class="record-plaque-title" id="recordPlaqueTitle">INTERNET GRAVEYARD RECORD</div>\n        <div class="record-plaque-mark" id="recordPlaqueMark">ARCHIVED</div>\n      </div>\n      <div class="record-plaque-grid">\n        <div class="record-plaque-item"><span id="recordNumberLabel">RECORD</span><b id="recordNumber"></b></div>\n        <div class="record-plaque-item"><span id="recordDateLabel">RECORDED</span><b id="recordDate"></b></div>\n        <div class="record-plaque-item"><span id="recordRespectLabel">RESPECTS</span><b id="recordRespect"></b></div>\n        <div class="record-plaque-item"><span id="recordStatusLabel">STATUS</span><b id="recordStatus"></b></div>\n      </div>\n    </div>\n'''
+          marker2='    <div class="detail-grid" id="detailGrid">'
+          if 'id="recordPlaque"' not in s:
+              s=s.replace(marker2,html+'\n'+marker2,1)
+
+          js='''\n if(typeof recordPlaque!=="undefined"){\n   const recorded=g.createdAt?new Date(g.createdAt):null;\n   const dateText=recorded&&!Number.isNaN(recorded.getTime())\n     ?recorded.toLocaleDateString(lang==="zh"?"zh-TW":"en-US",{year:"numeric",month:"short",day:"numeric"})\n     :"—";\n   recordPlaqueTitle.textContent=isMemorial\n     ?(lang==="zh"?"INTERNET GRAVEYARD · 紀念紀錄":"INTERNET GRAVEYARD · MEMORIAL RECORD")\n     :(lang==="zh"?"INTERNET GRAVEYARD · 下葬紀錄":"INTERNET GRAVEYARD · BURIAL RECORD");\n   recordPlaqueMark.textContent=isMemorial\n     ?(lang==="zh"?"已留下":"REMEMBERED")\n     :(g.resurrected?(lang==="zh"?"已復活":"RESURRECTED"):(lang==="zh"?"已封存":"ARCHIVED"));\n   recordNumberLabel.textContent=lang==="zh"?(isMemorial?"紀念編號":"墓碑編號"):"RECORD";\n   recordDateLabel.textContent=lang==="zh"?"建立日期":"RECORDED";\n   recordRespectLabel.textContent=lang==="zh"?(isMemorial?"收到的花":"致意次數"):(isMemorial?"FLOWERS":"RESPECTS");\n   recordStatusLabel.textContent=lang==="zh"?"狀態":"STATUS";\n   recordNumber.textContent=(isMemorial?"#":"#")+displayNumber;\n   recordDate.textContent=dateText;\n   recordRespect.textContent=String(g.respects||0);\n   recordStatus.textContent=isMemorial\n     ?(lang==="zh"?"被記得":"Remembered")\n     :(g.resurrected?(lang==="zh"?"已復活":"Resurrected"):(lang==="zh"?"已下葬":"Buried"));\n }\n'''
+          marker3=' detailDescription.textContent=g.description||"";'
+          if 'recordPlaqueTitle.textContent' not in s:
+              s=s.replace(marker3,js+'\n'+marker3,1)
+
+          p.write_text(s)
+          PY
+      - name: Commit change
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Make graves feel like permanent records"
+          git push origin HEAD:internet-graveyard
