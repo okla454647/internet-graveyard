@@ -1,0 +1,57 @@
+name: Harden shared grave flow
+on:
+  push:
+    paths:
+      - '.github/workflows/share-flow-v2.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: internet-graveyard
+      - name: Patch share flow
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+
+          s=s.replace('.share-buttons{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}', '.share-buttons{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}')
+
+          old='''      <div class="share-buttons">\n        <button onclick="shareTo('x')">X</button>\n        <button onclick="shareTo('threads')">Threads</button>\n        <button onclick="shareTo('reddit')">Reddit</button>\n        <button onclick="shareTo('linkedin')">LinkedIn</button>\n        <button onclick="copyShare()" data-i18n="copyLink">複製</button>\n      </div>'''
+          new='''      <div class="share-buttons">\n        <button onclick="shareTo('line')">LINE</button>\n        <button onclick="shareTo('facebook')">Facebook</button>\n        <button onclick="shareTo('x')">X</button>\n        <button onclick="shareTo('threads')">Threads</button>\n        <button onclick="shareTo('reddit')">Reddit</button>\n        <button onclick="shareTo('linkedin')">LinkedIn</button>\n        <button onclick="copyShare()" data-i18n="copyLink">複製</button>\n      </div>'''
+          if old not in s:
+              raise SystemExit('share button block not found')
+          s=s.replace(old,new,1)
+
+          old='''function graveShareUrl(g){\n return location.href.split("#")[0]+"#grave-"+g.id;\n}'''
+          new='''function graveShareUrl(g){\n const u=new URL(location.origin+location.pathname);\n if(g.graveType==="memorial")u.searchParams.set("type","memorial");\n u.hash="grave-"+g.id;\n return u.toString();\n}'''
+          if old not in s:
+              raise SystemExit('graveShareUrl block not found')
+          s=s.replace(old,new,1)
+
+          old=''' if(platform==="x") target="https://twitter.com/intent/tweet?text="+encodeURIComponent(text+" "+url);\n if(platform==="threads") target="https://www.threads.net/intent/post?text="+encodeURIComponent(text+" "+url);\n if(platform==="reddit") target="https://www.reddit.com/submit?url="+encodeURIComponent(url)+"&title="+encodeURIComponent(text);\n if(platform==="linkedin") target="https://www.linkedin.com/sharing/share-offsite/?url="+encodeURIComponent(url);'''
+          new=''' if(platform==="line") target="https://social-plugins.line.me/lineit/share?url="+encodeURIComponent(url)+"&text="+encodeURIComponent(text);\n if(platform==="facebook") target="https://www.facebook.com/sharer/sharer.php?u="+encodeURIComponent(url);\n if(platform==="x") target="https://twitter.com/intent/tweet?text="+encodeURIComponent(text+" "+url);\n if(platform==="threads") target="https://www.threads.net/intent/post?text="+encodeURIComponent(text+" "+url);\n if(platform==="reddit") target="https://www.reddit.com/submit?url="+encodeURIComponent(url)+"&title="+encodeURIComponent(text);\n if(platform==="linkedin") target="https://www.linkedin.com/sharing/share-offsite/?url="+encodeURIComponent(url);'''
+          if old not in s:
+              raise SystemExit('shareTo block not found')
+          s=s.replace(old,new,1)
+
+          old='''function openGraveFromHash(){\n const m=location.hash.match(/^#grave-(\\d+)$/);\n if(!m)return;\n const id=Number(m[1]);\n if(graves.some(g=>g.id===id)) openDetail(id,false);\n}'''
+          new='''async function openGraveFromHash(){\n const m=location.hash.match(/^#grave-(\\d+)$/);\n if(!m)return;\n const id=Number(m[1]);\n const existing=graves.find(g=>g.id===id);\n if(existing){\n   openDetail(id,false);\n   return;\n }\n try{\n   const {data,error}=await supabaseClient\n     .from("graves")\n     .select(PUBLIC_GRAVE_COLUMNS)\n     .eq("id",id)\n     .single();\n   if(error||!data)throw error||new Error("Grave not found");\n   const g=fromRow(data);\n\n   if(g.graveType!==gardenMode){\n     gardenMode=g.graveType;\n     buryType=g.graveType;\n     graveFilter="all";graveSortMode="latest";graveSearchText="";\n     const u=new URL(location.href);\n     if(gardenMode==="memorial")u.searchParams.set("type","memorial"); else u.searchParams.delete("type");\n     history.replaceState(null,"",u.pathname+u.search+u.hash);\n     applyGardenUI();\n     await loadGraves(true);\n     return;\n   }\n\n   graves=[g,...graves.filter(x=>x.id!==g.id)];\n   renderGraves();\n   openDetail(id,false);\n }catch(err){\n   console.warn("Shared grave could not be opened",err);\n   showToast(lang==="zh"?"找不到這座墓碑，可能已被隱藏或刪除":"This grave could not be found. It may have been hidden or deleted.");\n }\n}'''
+          if old not in s:
+              raise SystemExit('openGraveFromHash block not found')
+          s=s.replace(old,new,1)
+
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Harden shared grave links and sharing options"
+          git push origin internet-graveyard
