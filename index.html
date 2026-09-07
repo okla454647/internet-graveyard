@@ -1555,7 +1555,7 @@ function fillDetail(g){
    resurrectBtn.style.display=ownsGrave && !g.resurrected && g.graveType!=="memorial"?"block":"none";
  }
  sharePanel.style.display="none";
- const openedFromShare=location.hash==="#grave-"+g.id;
+ const openedFromShare=window.__sharedLandingId===g.id;
  if(typeof sharedVisitorCta!=="undefined"){
    sharedVisitorCta.style.display=!ownsGrave && openedFromShare?"block":"none";
    sharedVisitorCtaTitle.textContent=isMemorial
@@ -2060,13 +2060,22 @@ function browseFromSharedGrave(){
  });
 }
 
+function consumeSharedHash(id){
+ window.__sharedLandingId=id;
+ const u=new URL(location.href);
+ u.hash="";
+ history.replaceState(null,"",u.pathname+u.search);
+}
+
 async function openGraveFromHash(){
  const m=location.hash.match(/^#grave-(\d+)$/);
  if(!m)return;
  const id=Number(m[1]);
+ window.__sharedLandingId=id;
  const existing=graves.find(g=>g.id===id);
  if(existing){
    openDetail(id,false);
+   consumeSharedHash(id);
    return;
  }
  try{
@@ -2093,6 +2102,7 @@ async function openGraveFromHash(){
    graves=[g,...graves.filter(x=>x.id!==g.id)];
    renderGraves();
    openDetail(id,false);
+   consumeSharedHash(id);
  }catch(err){
    console.warn("Shared grave could not be opened",err);
    showToast(lang==="zh"?"找不到這座墓碑，可能已被隱藏或刪除":"This grave could not be found. It may have been hidden or deleted.");
