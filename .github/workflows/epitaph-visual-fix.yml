@@ -1,0 +1,33 @@
+name: Improve epitaph visual hierarchy
+on:
+  push:
+    branches: [internet-graveyard]
+    paths: ['.github/workflows/epitaph-visual-fix.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: internet-graveyard
+      - name: Patch epitaph presentation
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          old='''.detail-epitaph{\n  font-family:Georgia,serif;font-size:20px;line-height:1.65;\n  max-width:500px;margin:0 auto;color:#f1eee6\n}'''
+          new='''.detail-epitaph{\n  position:relative;font-family:Georgia,serif;font-size:20px;line-height:1.65;\n  max-width:500px;margin:34px auto 8px;padding:23px 24px 19px;color:#f1eee6;\n  border-top:1px solid #344038;border-bottom:1px solid #344038\n}\n.detail-epitaph::before{\n  content:"遺言";position:absolute;left:50%;top:-12px;transform:translateX(-50%);\n  padding:3px 11px;background:#101511;color:#8f9a90;font-family:Inter,system-ui,sans-serif;\n  font-size:11px;font-weight:800;letter-spacing:.16em;white-space:nowrap\n}\nbody.memorial-mode .detail-epitaph::before{content:"留下的話"}\nhtml[lang="en"] .detail-epitaph::before{content:"EPITAPH"}\nhtml[lang="en"] body.memorial-mode .detail-epitaph::before{content:"WORDS LEFT BEHIND"}'''
+          if old not in s: raise SystemExit('detail-epitaph CSS anchor not found')
+          s=s.replace(old,new,1)
+          p.write_text(s)
+          PY
+      - name: Commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git diff --cached --quiet || git commit -m 'Make epitaph visually distinct in grave details'
+          git push origin internet-graveyard
