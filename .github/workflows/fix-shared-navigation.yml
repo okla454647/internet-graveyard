@@ -1,0 +1,49 @@
+name: Fix shared-link navigation
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-shared-navigation.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: internet-graveyard
+      - name: Fix shared-link navigation state
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+
+          old=''' const openedFromShare=location.hash==="#grave-"+g.id;\n if(typeof sharedVisitorCta!=="undefined"){\n   sharedVisitorCta.style.display=!ownsGrave && openedFromShare?"block":"none";\n'''
+          new=''' const openedFromShare=window.__sharedLandingId===g.id;\n if(typeof sharedVisitorCta!=="undefined"){\n   sharedVisitorCta.style.display=!ownsGrave && openedFromShare?"block":"none";\n'''
+          if old not in s: raise SystemExit('fillDetail share-state anchor not found')
+          s=s.replace(old,new,1)
+
+          old_func='''async function openGraveFromHash(){\n const m=location.hash.match(/^#grave-(\\d+)$/);\n if(!m)return;\n const id=Number(m[1]);\n const existing=graves.find(g=>g.id===id);\n if(existing){\n   openDetail(id,false);\n   return;\n }\n'''
+          new_func='''function consumeSharedHash(id){\n window.__sharedLandingId=id;\n const u=new URL(location.href);\n u.hash="";\n history.replaceState(null,"",u.pathname+u.search);\n}\n\nasync function openGraveFromHash(){\n const m=location.hash.match(/^#grave-(\\d+)$/);\n if(!m)return;\n const id=Number(m[1]);\n window.__sharedLandingId=id;\n const existing=graves.find(g=>g.id===id);\n if(existing){\n   openDetail(id,false);\n   consumeSharedHash(id);\n   return;\n }\n'''
+          if old_func not in s: raise SystemExit('openGraveFromHash start anchor not found')
+          s=s.replace(old_func,new_func,1)
+
+          old_end='''   graves=[g,...graves.filter(x=>x.id!==g.id)];\n   renderGraves();\n   openDetail(id,false);\n }catch(err){\n'''
+          new_end='''   graves=[g,...graves.filter(x=>x.id!==g.id)];\n   renderGraves();\n   openDetail(id,false);\n   consumeSharedHash(id);\n }catch(err){\n'''
+          if old_end not in s: raise SystemExit('openGraveFromHash end anchor not found')
+          s=s.replace(old_end,new_end,1)
+
+          # When the shared item requires switching garden, preserve the hash until loadGraves finishes.
+          # The next hash-open pass will consume it once the item exists in the active list.
+
+          p.write_text(s)
+          PY
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Let shared-link visitors navigate normally after landing"
+          git push origin internet-graveyard
