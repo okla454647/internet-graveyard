@@ -1,0 +1,51 @@
+name: Improve shared visitor conversion
+on:
+  push:
+    paths:
+      - '.github/workflows/share-conversion-v3.yml'
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: internet-graveyard
+      - name: Improve visitor CTA
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+
+          old_css='''.shared-visitor-cta{display:none;margin-top:22px;padding:18px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,#141b16,#0d120e);text-align:center}\n.shared-visitor-cta b{display:block;font-size:16px;margin-bottom:6px}.shared-visitor-cta p{margin:0 auto 13px;max-width:460px;color:var(--muted);font-size:13px;line-height:1.6}.shared-visitor-cta button{width:100%;border:0;border-radius:11px;padding:13px 16px;background:var(--accent);color:#111;font-weight:850}\n'''
+          new_css='''.shared-visitor-cta{display:none;margin-top:22px;padding:18px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,#141b16,#0d120e);text-align:center}\n.shared-visitor-cta b{display:block;font-size:16px;margin-bottom:6px}.shared-visitor-cta p{margin:0 auto 13px;max-width:460px;color:var(--muted);font-size:13px;line-height:1.6}\n.shared-visitor-actions{display:grid;grid-template-columns:1.25fr .75fr;gap:9px;margin-top:12px}\n.shared-visitor-actions button{width:100%;border-radius:11px;padding:13px 16px;font-weight:850}\n.shared-visitor-actions .shared-create{border:0;background:var(--accent);color:#111}\n.shared-visitor-actions .shared-browse{border:1px solid var(--line);background:#151c17;color:var(--text)}\n.shared-visitor-proof{margin-top:10px;color:#7f8a81;font-size:11px;line-height:1.45}\n@media(max-width:520px){.shared-visitor-actions{grid-template-columns:1fr}}\n'''
+          if old_css not in s: raise SystemExit('CTA css anchor not found')
+          s=s.replace(old_css,new_css,1)
+
+          old_html='''    <div class="shared-visitor-cta" id="sharedVisitorCta">\n      <b id="sharedVisitorCtaTitle"></b>\n      <p id="sharedVisitorCtaCopy"></p>\n      <button id="sharedVisitorCtaBtn" type="button" onclick="createFromSharedGrave()"></button>\n    </div>\n'''
+          new_html='''    <div class="shared-visitor-cta" id="sharedVisitorCta">\n      <b id="sharedVisitorCtaTitle"></b>\n      <p id="sharedVisitorCtaCopy"></p>\n      <div class="shared-visitor-actions">\n        <button class="shared-create" id="sharedVisitorCtaBtn" type="button" onclick="createFromSharedGrave()"></button>\n        <button class="shared-browse" id="sharedVisitorBrowseBtn" type="button" onclick="browseFromSharedGrave()"></button>\n      </div>\n      <div class="shared-visitor-proof" id="sharedVisitorProof"></div>\n    </div>\n'''
+          if old_html not in s: raise SystemExit('CTA html anchor not found')
+          s=s.replace(old_html,new_html,1)
+
+          old_js='''   sharedVisitorCtaBtn.textContent=isMemorial\n     ?(lang==="zh"?"🕯️ 建立我的紀念":"🕯️ Create my memorial")\n     :(lang==="zh"?"🪦 埋葬我的失敗":"🪦 Bury my failure");\n }\n'''
+          new_js='''   sharedVisitorCtaBtn.textContent=isMemorial\n     ?(lang==="zh"?"🕯️ 建立我的紀念":"🕯️ Create my memorial")\n     :(lang==="zh"?"🪦 埋葬我的失敗":"🪦 Bury my failure");\n   if(typeof sharedVisitorBrowseBtn!=="undefined") sharedVisitorBrowseBtn.textContent=isMemorial\n     ?(lang==="zh"?"看看其他紀念":"Browse memorials")\n     :(lang==="zh"?"逛逛墓園":"Browse graveyard");\n   if(typeof sharedVisitorProof!=="undefined") sharedVisitorProof.textContent=lang==="zh"\n     ?"免費建立 · 不用註冊 · 約 30 秒"\n     :"Free to create · No sign-up · About 30 seconds";\n }\n'''
+          if old_js not in s: raise SystemExit('CTA js anchor not found')
+          s=s.replace(old_js,new_js,1)
+
+          old_func='''function createFromSharedGrave(){\n const g=graves.find(x=>x.id===activeId);\n if(!g)return;\n detailDialog.close();\n gardenMode=g.graveType==="memorial"?"memorial":"project";\n buryType=gardenMode;\n applyGardenUI();\n buryForm.reset();\n applyBuryTypeUI();\n buryDialog.showModal();\n}\n'''
+          new_func='''function clearSharedHash(){\n const u=new URL(location.href);\n u.hash="";\n history.replaceState(null,"",u.pathname+u.search);\n}\n\nfunction createFromSharedGrave(){\n const g=graves.find(x=>x.id===activeId);\n if(!g)return;\n detailDialog.close();\n gardenMode=g.graveType==="memorial"?"memorial":"project";\n buryType=gardenMode;\n clearSharedHash();\n applyGardenUI();\n buryForm.reset();\n applyBuryTypeUI();\n buryDialog.showModal();\n}\n\nfunction browseFromSharedGrave(){\n const g=graves.find(x=>x.id===activeId);\n detailDialog.close();\n if(g){\n   gardenMode=g.graveType==="memorial"?"memorial":"project";\n   buryType=gardenMode;\n }\n clearSharedHash();\n applyGardenUI();\n window.requestAnimationFrame(()=>{\n   const target=document.querySelector('.grave-tools')||document.getElementById('graveyard');\n   if(target) target.scrollIntoView({behavior:'smooth',block:'start'});\n });\n}\n'''
+          if old_func not in s: raise SystemExit('createFromSharedGrave anchor not found')
+          s=s.replace(old_func,new_func,1)
+
+          p.write_text(s)
+          PY
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Strengthen shared visitor conversion path"
+          git push origin internet-graveyard
