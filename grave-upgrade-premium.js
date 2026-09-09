@@ -1,35 +1,41 @@
 (()=>{
 'use strict';
-/* Premium visual enhancement: visual-only overlays must never block grave clicks. */
 function install(){if(document.getElementById('ig-premium-fx'))return;const s=document.createElement('style');s.id='ig-premium-fx';s.textContent=`
 @keyframes igObsidianSweep{0%{transform:translateX(-190%) skewX(-18deg);opacity:0}10%{opacity:.12}34%{opacity:.48}54%{opacity:.10}68%,100%{transform:translateX(390%) skewX(-18deg);opacity:0}}
 @keyframes igGoldSweep{0%{transform:translateX(-190%) skewX(-18deg);opacity:0}10%{opacity:.14}34%{opacity:.56}54%{opacity:.12}68%,100%{transform:translateX(390%) skewX(-18deg);opacity:0}}
+@keyframes igMemorialSilverSweep{0%{transform:translateX(-190%) skewX(-16deg);opacity:0}12%{opacity:.06}38%{opacity:.22}58%{opacity:.05}72%,100%{transform:translateX(390%) skewX(-16deg);opacity:0}}
+@keyframes igMemorialGoldSweep{0%{transform:translateX(-190%) skewX(-16deg);opacity:0}12%{opacity:.07}38%{opacity:.26}58%{opacity:.06}72%,100%{transform:translateX(390%) skewX(-16deg);opacity:0}}
 @keyframes igMetalPulse{0%,100%{filter:brightness(.96)}50%{filter:brightness(1.22)}}
-body:not(.memorial-mode) #graveyard .grave.ig-paid-obsidian,body:not(.memorial-mode) #graveyard .grave.ig-paid-gold{isolation:isolate;cursor:pointer!important}
-body:not(.memorial-mode) #graveyard .grave.ig-paid-obsidian::before,body:not(.memorial-mode) #graveyard .grave.ig-paid-gold::before,body:not(.memorial-mode) #graveyard .grave.ig-paid-obsidian::after,body:not(.memorial-mode) #graveyard .grave.ig-paid-gold::after{pointer-events:none!important}
+body:not(.memorial-mode) #graveyard .grave.ig-paid-obsidian,body:not(.memorial-mode) #graveyard .grave.ig-paid-gold,body.memorial-mode #graveyard .grave.ig-paid-obsidian,body.memorial-mode #graveyard .grave.ig-paid-gold{isolation:isolate;cursor:pointer!important}
+body #graveyard .grave.ig-paid-obsidian::before,body #graveyard .grave.ig-paid-gold::before,body #graveyard .grave.ig-paid-obsidian::after,body #graveyard .grave.ig-paid-gold::after{pointer-events:none!important}
 body:not(.memorial-mode) #graveyard .grave.ig-paid-obsidian::after{content:''!important;position:absolute!important;top:-35%!important;bottom:-35%!important;left:-32%!important;width:22%!important;z-index:2!important;background:linear-gradient(90deg,transparent,rgba(235,245,250,.06),rgba(255,255,255,.42),rgba(235,245,250,.08),transparent)!important;animation:igObsidianSweep 3.8s ease-in-out infinite!important}
 body:not(.memorial-mode) #graveyard .grave.ig-paid-gold::after{content:''!important;position:absolute!important;top:-35%!important;bottom:-35%!important;left:-32%!important;width:22%!important;z-index:2!important;background:linear-gradient(90deg,transparent,rgba(255,224,128,.07),rgba(255,239,180,.54),rgba(255,211,82,.10),transparent)!important;animation:igGoldSweep 3.3s ease-in-out infinite!important}
+body.memorial-mode #graveyard .grave.ig-paid-obsidian::after{content:''!important;position:absolute!important;top:-28%!important;bottom:-28%!important;left:-32%!important;width:18%!important;z-index:2!important;background:linear-gradient(90deg,transparent,rgba(230,238,241,.03),rgba(242,247,249,.20),rgba(230,238,241,.04),transparent)!important;animation:igMemorialSilverSweep 4.8s ease-in-out infinite!important}
+body.memorial-mode #graveyard .grave.ig-paid-gold::after{content:''!important;position:absolute!important;top:-28%!important;bottom:-28%!important;left:-32%!important;width:18%!important;z-index:2!important;background:linear-gradient(90deg,transparent,rgba(250,222,149,.03),rgba(255,235,178,.24),rgba(250,215,119,.04),transparent)!important;animation:igMemorialGoldSweep 4.4s ease-in-out infinite!important}
 body:not(.memorial-mode) #graveyard .grave.ig-paid-obsidian{background:radial-gradient(circle at 22% 8%,rgba(190,205,214,.12),transparent 32%),linear-gradient(135deg,#24282b 0%,#080a0b 54%,#010202 100%)!important}
 body:not(.memorial-mode) #graveyard .grave.ig-paid-gold{background:radial-gradient(circle at 22% 8%,rgba(255,210,91,.15),transparent 32%),linear-gradient(135deg,#3c2e0e 0%,#130e03 55%,#040301 100%)!important}
 body:not(.memorial-mode) #graveyard .grave.ig-paid-obsidian .stone,body:not(.memorial-mode) #graveyard .grave.ig-paid-gold .stone{position:relative;z-index:3;pointer-events:none!important;animation:igMetalPulse 2.8s ease-in-out infinite}
-body:not(.memorial-mode) #graveyard .grave.ig-paid-obsidian>* ,body:not(.memorial-mode) #graveyard .grave.ig-paid-gold>*{position:relative;z-index:3;pointer-events:none!important}
-body:not(.memorial-mode) #graveyard .grave.ig-paid-obsidian>button.cover,body:not(.memorial-mode) #graveyard .grave.ig-paid-gold>button.cover{position:absolute!important;inset:0!important;z-index:20!important;pointer-events:auto!important;background:transparent!important;border:0!important}
+body #graveyard .grave.ig-paid-obsidian>* ,body #graveyard .grave.ig-paid-gold>*{position:relative;z-index:3;pointer-events:none!important}
+body #graveyard .grave.ig-paid-obsidian>button.cover,body #graveyard .grave.ig-paid-gold>button.cover{position:absolute!important;inset:0!important;z-index:20!important;pointer-events:auto!important;background:transparent!important;border:0!important}
+body.memorial-mode #graveyard .grave.ig-paid-obsidian .memorial-card-image,body.memorial-mode #graveyard .grave.ig-paid-gold .memorial-card-image{position:relative;z-index:3}
 #detailDialog .detail-grave.ig-detail-obsidian,#detailDialog .detail-grave.ig-detail-gold{position:relative!important;overflow:hidden!important;isolation:isolate!important}
 #detailDialog .detail-grave.ig-detail-obsidian::before,#detailDialog .detail-grave.ig-detail-gold::before,#detailDialog .detail-grave.ig-detail-obsidian::after,#detailDialog .detail-grave.ig-detail-gold::after{pointer-events:none!important}
 #detailDialog .detail-grave.ig-detail-obsidian::after,#detailDialog .detail-grave.ig-detail-gold::after{content:'';position:absolute;top:-25%;bottom:-25%;left:-35%;width:20%;z-index:0;transform:skewX(-18deg)}
-#detailDialog .detail-grave.ig-detail-obsidian::after{background:linear-gradient(90deg,transparent,rgba(255,255,255,.05),rgba(226,238,244,.28),rgba(255,255,255,.05),transparent);animation:igObsidianSweep 4.3s ease-in-out infinite}
-#detailDialog .detail-grave.ig-detail-gold::after{background:linear-gradient(90deg,transparent,rgba(255,220,100,.05),rgba(255,235,166,.34),rgba(255,205,69,.07),transparent);animation:igGoldSweep 3.8s ease-in-out infinite}
+body:not(.memorial-mode) #detailDialog .detail-grave.ig-detail-obsidian::after{background:linear-gradient(90deg,transparent,rgba(255,255,255,.05),rgba(226,238,244,.28),rgba(255,255,255,.05),transparent);animation:igObsidianSweep 4.3s ease-in-out infinite}
+body:not(.memorial-mode) #detailDialog .detail-grave.ig-detail-gold::after{background:linear-gradient(90deg,transparent,rgba(255,220,100,.05),rgba(255,235,166,.34),rgba(255,205,69,.07),transparent);animation:igGoldSweep 3.8s ease-in-out infinite}
+body.memorial-mode #detailDialog .detail-grave.ig-detail-obsidian::after{background:linear-gradient(90deg,transparent,rgba(236,243,246,.025),rgba(241,247,249,.16),rgba(236,243,246,.03),transparent);animation:igMemorialSilverSweep 5.3s ease-in-out infinite}
+body.memorial-mode #detailDialog .detail-grave.ig-detail-gold::after{background:linear-gradient(90deg,transparent,rgba(250,226,164,.025),rgba(255,237,190,.18),rgba(250,219,134,.03),transparent);animation:igMemorialGoldSweep 4.9s ease-in-out infinite}
 #detailDialog .detail-grave.ig-detail-obsidian>* ,#detailDialog .detail-grave.ig-detail-gold>*{position:relative;z-index:1}
-#detailDialog .detail-grave.ig-detail-obsidian{background:radial-gradient(circle at 50% 0,rgba(203,218,226,.11),transparent 29%),linear-gradient(180deg,#111517 0%,#070909 48%,#020303 100%)!important}
-#detailDialog .detail-grave.ig-detail-gold{background:radial-gradient(circle at 50% 0,rgba(255,209,83,.15),transparent 30%),linear-gradient(180deg,#241b06 0%,#100c03 48%,#050301 100%)!important}
-#detailDialog .detail-grave.ig-detail-gold .record-plaque{background:linear-gradient(145deg,#181309,#090a08)!important;border-color:#9a7a29!important;box-shadow:inset 0 0 28px rgba(221,179,65,.07)!important}
-#detailDialog .detail-grave.ig-detail-gold .record-plaque h3,#detailDialog .detail-grave.ig-detail-gold .record-plaque strong{color:#efd17b!important}
-#detailDialog .detail-grave.ig-detail-obsidian .record-plaque{background:linear-gradient(145deg,#151a1d,#080a0b)!important;border-color:#69767d!important;box-shadow:inset 0 0 28px rgba(210,222,228,.06)!important}
-#detailDialog .detail-grave.ig-detail-obsidian .record-plaque h3,#detailDialog .detail-grave.ig-detail-obsidian .record-plaque strong{color:#dbe3e7!important}
-#detailDialog .detail-grave.ig-detail-gold #ig-entry{background:linear-gradient(145deg,#211908,#0b0904)!important;border-color:#9a7a29!important;box-shadow:inset 0 0 22px rgba(237,199,95,.07)!important}
-#detailDialog .detail-grave.ig-detail-gold #ig-entry b{color:#f0d27a!important}
-#detailDialog .detail-grave.ig-detail-obsidian #ig-entry{background:linear-gradient(145deg,#181d20,#080a0b)!important;border-color:#69767d!important;box-shadow:inset 0 0 20px rgba(218,226,230,.05)!important}
-#detailDialog .detail-grave.ig-detail-obsidian #ig-entry b{color:#dbe3e7!important}
+body:not(.memorial-mode) #detailDialog .detail-grave.ig-detail-obsidian{background:radial-gradient(circle at 50% 0,rgba(203,218,226,.11),transparent 29%),linear-gradient(180deg,#111517 0%,#070909 48%,#020303 100%)!important}
+body:not(.memorial-mode) #detailDialog .detail-grave.ig-detail-gold{background:radial-gradient(circle at 50% 0,rgba(255,209,83,.15),transparent 30%),linear-gradient(180deg,#241b06 0%,#100c03 48%,#050301 100%)!important}
+body.memorial-mode #detailDialog .detail-grave.ig-detail-obsidian{background:radial-gradient(circle at 50% 0,rgba(210,222,226,.07),transparent 30%),linear-gradient(180deg,#191d1e 0%,#101211 50%,#0b0d0c 100%)!important}
+body.memorial-mode #detailDialog .detail-grave.ig-detail-gold{background:radial-gradient(circle at 50% 0,rgba(229,194,101,.08),transparent 31%),linear-gradient(180deg,#201b10 0%,#14120d 50%,#0c0b08 100%)!important}
+body:not(.memorial-mode) #detailDialog .detail-grave.ig-detail-gold .record-plaque{background:linear-gradient(145deg,#181309,#090a08)!important;border-color:#9a7a29!important;box-shadow:inset 0 0 28px rgba(221,179,65,.07)!important}
+body:not(.memorial-mode) #detailDialog .detail-grave.ig-detail-obsidian .record-plaque{background:linear-gradient(145deg,#151a1d,#080a0b)!important;border-color:#69767d!important;box-shadow:inset 0 0 28px rgba(210,222,228,.06)!important}
+body.memorial-mode #detailDialog .detail-grave.ig-detail-obsidian .record-plaque{background:linear-gradient(145deg,#171b1c,#101211)!important;border-color:#69767d!important;box-shadow:inset 0 0 24px rgba(218,226,230,.035)!important}
+body.memorial-mode #detailDialog .detail-grave.ig-detail-gold .record-plaque{background:linear-gradient(145deg,#1d180e,#11100c)!important;border-color:#876f39!important;box-shadow:inset 0 0 24px rgba(229,194,101,.04)!important}
+body.memorial-mode #detailDialog .detail-grave.ig-detail-obsidian #ig-entry{background:linear-gradient(145deg,#171b1c,#101211)!important;border-color:#69767d!important}
+body.memorial-mode #detailDialog .detail-grave.ig-detail-gold #ig-entry{background:linear-gradient(145deg,#1d180e,#11100c)!important;border-color:#876f39!important}
 `;document.head.appendChild(s)}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});else install();
 })();
