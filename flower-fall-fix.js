@@ -15,12 +15,49 @@ function installCss(){document.getElementById('ig-flower-fall-fix')?.remove();co
 .ig-flower-progress,.ig-milestone-detail,.ig-next-milestone{margin:12px 0 0;padding:12px 14px;border:1px solid #5c4046;border-radius:12px;background:linear-gradient(145deg,#1b1215,#0c0e0c)}.ig-flower-progress{text-align:left}.ig-flower-progress-head{display:flex;justify-content:space-between;gap:12px;font-size:12px;color:#ead0d4}.ig-flower-track{height:7px;margin-top:8px;border-radius:999px;background:#302327;overflow:hidden}.ig-flower-track>i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#925c69,#e1aab4)}.ig-flower-progress small{display:block;margin-top:7px;color:#a9989c;font-size:11px}.ig-milestone-detail{text-align:center;color:#efc8cf;font-size:12px;font-weight:800}.ig-next-milestone{display:grid;grid-template-columns:92px 1fr;gap:12px;align-items:center;min-height:90px;background:linear-gradient(145deg,#141112,#0d0f0e)}.ig-next-visual{height:64px;border-radius:10px;position:relative;overflow:hidden;background:linear-gradient(160deg,#181414,#0d0f0d);border:1px solid #3d3034}.ig-next-visual::before,.ig-next-visual::after{position:absolute;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:12px}.ig-next-visual::before{content:'🌿 🌹 🌿 🌸 🌿';top:3px}.ig-next-visual::after{content:'🌿 🌸 🌿 🌹 🌿';bottom:3px}.ig-next-visual[data-tier="10"]::before,.ig-next-visual[data-tier="10"]::after{content:'🌱';font-size:16px}.ig-next-visual[data-tier="500"]{border-color:#8c5d67;box-shadow:inset 0 0 0 4px #0b0d0b,inset 0 0 0 6px rgba(205,128,146,.2)}.ig-next-visual[data-tier="1000"]{border:2px solid #d692a1;box-shadow:inset 0 0 0 4px #0b0d0b,inset 0 0 0 7px rgba(224,143,160,.25),0 0 18px rgba(216,123,145,.16)}.ig-next-mini-petal{position:absolute;top:-8px;font-size:10px;animation:igPreview 2.8s linear infinite;opacity:0}.ig-next-copy b{display:block;color:#ead4d8;font-size:12px;margin-bottom:4px}.ig-next-copy span{display:block;color:#aa9a9d;font-size:11px;line-height:1.45}.ig-next-copy em{display:inline-block;margin-top:6px;font-style:normal;font-size:10px;font-weight:800;color:#df9aaa;border:1px solid #694a51;border-radius:999px;padding:3px 7px;background:#24171a}.ig-next-milestone.done{grid-template-columns:1fr;text-align:center;min-height:64px}#ig-entry{margin-top:14px!important}@media(max-width:520px){.ig-next-milestone{grid-template-columns:78px 1fr}.ig-next-visual{height:58px}}
 `;document.head.appendChild(s)}
 function ensureLayer(root,detail=false){if(!root)return;const ok=detail?root.classList.contains('ig-detail-flower'):root.classList.contains('ig-flower-bloom')||root.classList.contains('ig-flower-honored')||root.classList.contains('ig-flower-garden')||root.classList.contains('ig-flower-legend');if(!ok){root.querySelector(':scope > .ig-fall-layer')?.remove();return}const rich=root.classList.contains('ig-flower-legend')||root.classList.contains('legend');const wanted=detail?(rich?20:14):(rich?12:8);let layer=root.querySelector(':scope > .ig-fall-layer');if(layer&&Number(layer.dataset.count)===wanted)return;layer?.remove();layer=document.createElement('div');layer.className='ig-fall-layer'+(detail?' detail':'');layer.dataset.count=String(wanted);for(let i=0;i<wanted;i++){const p=document.createElement('span');p.className='ig-fall-petal';p.textContent=petals[i%petals.length];p.style.left=(4+((i*73)%92))+'%';p.style.setProperty('--dur',((detail?7.8:5.8)+(i%5)*.7)+'s');p.style.setProperty('--delay',(-i*(detail?.63:.47))+'s');layer.appendChild(p)}root.appendChild(layer)}
-function actualCount(){const api=window.IGFlowerMilestones;if(api?.detailCount){const n=Number(api.detailCount());if(Number.isFinite(n))return n}const dlg=document.getElementById('detailDialog');if(!dlg)return 0;const text=dlg.innerText||dlg.textContent||'';let m=text.match(/(?:致意次數|獻花次數|respect count|flower count)\s*([\d,]+)/i);if(m)return Number(m[1].replace(/,/g,''));for(const b of dlg.querySelectorAll('button')){const t=b.innerText||b.textContent||'';if(/致意|獻花|respect|flower/i.test(t)){const mm=t.match(/[\d,]+/g);if(mm)return Number(mm[mm.length-1].replace(/,/g,''))}}return 0}
+function actualCount(){
+ const dlg=document.getElementById('detailDialog');
+ if(!dlg)return null;
+ const btn=dlg.querySelector('#respectBtn');
+ if(btn){const all=(btn.innerText||btn.textContent||'').match(/[\d,]+/g);if(all?.length){const n=Number(all[all.length-1].replace(/,/g,''));if(Number.isFinite(n))return n}}
+ const api=window.IGFlowerMilestones;
+ if(api?.detailCount){const n=Number(api.detailCount());if(Number.isFinite(n))return n}
+ return null;
+}
 function buildMilestone(n){const l=[...milestones].reverse().find(m=>n>=m.n);if(!l)return null;const box=document.createElement('div');box.className='ig-milestone-detail';box.dataset.count=String(n);box.textContent=n>=1000?`🌹 ${n.toLocaleString()} · ${zh()?'千花傳說 · 永久典藏狀態':'Legend of 1,000 · Permanent memorial status'}`:n>=500?`🌹 ${n.toLocaleString()} · ${zh()?'永恆花園 · 花冠外框已永久解鎖':'Eternal Garden · Floral wreath permanently unlocked'}`:`🌹 ${n.toLocaleString()} · ${zh()?l.zh:l.en}`;return box}
 function buildProgress(n){const nx=milestones.find(m=>n<m.n);if(!nx)return null;const prev=[...milestones].reverse().find(m=>n>=m.n)?.n||0;const pct=Math.max(0,Math.min(100,(n-prev)/(nx.n-prev)*100));const p=document.createElement('div');p.className='ig-flower-progress';p.dataset.count=String(n);p.innerHTML=`<div class="ig-flower-progress-head"><b>${zh()?'獻花里程碑':'Flower milestone'}</b><span>${n.toLocaleString()} / ${nx.n.toLocaleString()} 🌹</span></div><div class="ig-flower-track"><i style="width:${pct}%"></i></div><small>${zh()?`再 ${(nx.n-n).toLocaleString()} 朵花解鎖「${nx.zh}」永久效果`:`${(nx.n-n).toLocaleString()} more flowers to unlock “${nx.en}” permanently`}</small>`;return p}
 function buildPreview(n){const nx=milestones.find(m=>n<m.n),box=document.createElement('div');box.className='ig-next-milestone'+(nx?'':' done');if(!nx){box.innerHTML=`<div class="ig-next-copy"><b>🌹 ${zh()?'目前最高獻花里程碑已解鎖':'Highest flower milestone unlocked'}</b><span>${zh()?'這座墓碑已達到目前最高的花冠狀態。':'This grave has reached the current highest floral state.'}</span></div>`;return box}const v=document.createElement('div');v.className='ig-next-visual';v.dataset.tier=String(nx.n);if(nx.n>=50){for(let i=0;i<(nx.n>=1000?5:3);i++){const p=document.createElement('span');p.className='ig-next-mini-petal';p.textContent=petals[i%petals.length];p.style.left=(18+i*17)+'%';p.style.animationDelay=(-i*.55)+'s';v.appendChild(p)}}const c=document.createElement('div');c.className='ig-next-copy';c.innerHTML=`<b>${zh()?'下一個里程碑':'Next milestone'}：${nx.n.toLocaleString()} 🌹 · ${zh()?nx.zh:nx.en}</b><span>${zh()?nx.descZh:nx.descEn}</span><em>${zh()?`再 ${(nx.n-n).toLocaleString()} 朵解鎖`:`${(nx.n-n).toLocaleString()} more to unlock`}</em>`;box.append(v,c);return box}
-function syncDetail(){const dlg=document.getElementById('detailDialog');const d=dlg?.querySelector('.detail-grave');if(!dlg||!d)return;ensureLayer(d,true);const parent=document.getElementById('ownerActionsLabel')?.parentElement||document.getElementById('detailName')?.parentElement;if(!parent)return;parent.querySelectorAll(':scope > .ig-flower-progress,:scope > .ig-milestone-detail,:scope > .ig-next-milestone').forEach(x=>x.remove());const n=actualCount();const entry=parent.querySelector('#ig-entry');const marker=document.createElement('span');marker.style.display='none';entry?parent.insertBefore(marker,entry):parent.appendChild(marker);const milestone=buildMilestone(n),progress=buildProgress(n),preview=buildPreview(n);if(milestone)parent.insertBefore(milestone,marker);if(progress)parent.insertBefore(progress,marker);parent.insertBefore(preview,marker);marker.remove();if(entry&&entry.parentElement===parent)parent.appendChild(entry)}
-let busy=false,t=0;function paint(){if(busy)return;busy=true;try{document.querySelectorAll('#graveyard .grave').forEach(g=>ensureLayer(g,false));syncDetail()}finally{busy=false}}function schedule(){clearTimeout(t);t=setTimeout(paint,140)}
-function start(){installCss();paint();new MutationObserver(ms=>{if(ms.every(m=>{const e=m.target?.nodeType===1?m.target:m.target?.parentElement;return !!e?.closest?.('.ig-next-milestone,.ig-flower-progress,.ig-milestone-detail,.ig-fall-layer')}))return;schedule()}).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['open','class']});document.addEventListener('click',e=>{if(e.target.closest?.('.grave,.respect-btn,[data-action="respect"],#detailRespectBtn,.detail-respect')){schedule();setTimeout(schedule,500)}},true)}
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(start,220),{once:true});else setTimeout(start,220);
+function syncDetail(){
+ const dlg=document.getElementById('detailDialog'),d=dlg?.querySelector('.detail-grave');
+ if(!dlg||!d||!dlg.open)return;
+ const n=actualCount();
+ if(!Number.isFinite(n))return;
+ ensureLayer(d,true);
+ const parent=document.getElementById('ownerActionsLabel')?.parentElement||document.getElementById('detailName')?.parentElement;
+ if(!parent)return;
+ parent.querySelectorAll(':scope > .ig-flower-progress,:scope > .ig-milestone-detail,:scope > .ig-next-milestone').forEach(x=>x.remove());
+ const entry=parent.querySelector('#ig-entry');
+ const marker=document.createElement('span');marker.style.display='none';entry?parent.insertBefore(marker,entry):parent.appendChild(marker);
+ const milestone=buildMilestone(n),progress=buildProgress(n),preview=buildPreview(n);
+ if(milestone)parent.insertBefore(milestone,marker);
+ if(progress)parent.insertBefore(progress,marker);
+ parent.insertBefore(preview,marker);
+ marker.remove();
+ if(entry&&entry.parentElement===parent)parent.appendChild(entry);
+}
+let busy=false,t=0;
+function paint(){if(busy)return;busy=true;try{document.querySelectorAll('#graveyard .grave').forEach(g=>ensureLayer(g,false));syncDetail()}finally{busy=false}}
+function schedule(delay=80){clearTimeout(t);t=setTimeout(paint,delay)}
+function start(){
+ installCss();paint();
+ const dlg=document.getElementById('detailDialog');
+ if(dlg){
+   new MutationObserver(ms=>{
+     if(ms.every(m=>{const e=m.target?.nodeType===1?m.target:m.target?.parentElement;return !!e?.closest?.('.ig-next-milestone,.ig-flower-progress,.ig-milestone-detail,.ig-fall-layer')}))return;
+     schedule(40);
+   }).observe(dlg,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['open','class']});
+ }
+ document.addEventListener('click',e=>{if(e.target.closest?.('.grave,.respect-btn,[data-action="respect"],#respectBtn,.detail-respect')){schedule(60);setTimeout(()=>schedule(40),300);setTimeout(()=>schedule(40),700)}},true);
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(start,180),{once:true});else setTimeout(start,180);
 })();
